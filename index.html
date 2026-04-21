@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="《雾铃小镇》是一款春日田园像素叙事小游戏试玩 Demo。在七个游戏日里认识村民、推动风铃集会主线，并走到桥边真正响起的第一声。"
+    />
+    <meta name="theme-color" content="#d8a76f" />
+    <meta property="og:title" content="雾铃小镇 - 七日试玩 Demo" />
+    <meta
+      property="og:description"
+      content="在七个游戏日里认识村民、推动风铃集会主线，并走到桥边真正响起的第一声。"
+    />
+    <meta property="og:image" content="assets/images/cover-art.jpg" />
+    <title>雾铃小镇 - 七日试玩 Demo</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">七日试玩 Demo</p>
+          <h1>雾铃小镇</h1>
+          <p class="lede">
+            一份关于春风、桥铃和人与人慢慢靠近的田园像素小故事。现在已经可以完整体验风铃集会前后一周。
+          </p>
+          <div class="hero-tags" aria-label="试玩亮点">
+            <span>5 位可互动村民</span>
+            <span>7 天游玩流程</span>
+            <span>春日风铃主线</span>
+            <span>可自动存档</span>
+          </div>
+        </div>
+
+        <div class="hud-card">
+          <div class="hud-row">
+            <span>日期</span>
+            <strong id="hud-day">周一 / 春 1</strong>
+          </div>
+          <div class="hud-row">
+            <span>天气</span>
+            <strong id="hud-weather">薄雾</strong>
+          </div>
+          <div class="hud-row">
+            <span>时段</span>
+            <strong id="hud-time">清晨</strong>
+          </div>
+          <div class="hud-row">
+            <span>试玩进度</span>
+            <strong id="hud-progress">第 1 / 7 天</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="release-deck" aria-label="试玩封面与发布入口">
+        <article class="poster-card">
+          <div class="cover-poster">
+            <img
+              class="cover-image"
+              src="assets/images/cover-art.jpg"
+              alt="雾铃小镇的发布主视觉：黄昏桥边挂着风铃和布条，村民站在桥前看向发光的面包房与河面。"
+            />
+            <div class="cover-image-overlay">
+              <p class="cover-badge">Store Capsule</p>
+              <div class="cover-title-mark">
+                <strong>雾铃小镇</strong>
+                <span>Spring Wind Chime Week Demo</span>
+              </div>
+            </div>
+          </div>
+          <p class="poster-note">已导出本地主视觉：<code>assets/images/cover-art.jpg</code></p>
+        </article>
+
+        <article class="paper release-paper release-paper-hero">
+          <p class="eyebrow">Public Demo 0.3</p>
+          <h2>一周时间，把桥边慢慢等热。</h2>
+          <p class="release-copy">
+            《雾铃小镇》是一款以“春日风铃集会”为主线的田园像素叙事小游戏。你不会被塞进很重的数值系统，而是通过和村民说话、帮忙、再在黄昏时去桥边听风，把这座小镇一点点走熟。
+          </p>
+          <p class="release-copy">
+            这一版对外试玩聚焦“被小镇接住”的感觉：从第一天初来乍到，到第七天真正站进人群里，节奏始终围绕关系、天气、桥边变化和一句终于响完整的话展开。
+          </p>
+
+          <div class="fact-grid" aria-label="试玩信息">
+            <div class="fact-chip">
+              <span>类型</span>
+              <strong>慢节奏叙事试玩</strong>
+            </div>
+            <div class="fact-chip">
+              <span>时长</span>
+              <strong>15 - 25 分钟</strong>
+            </div>
+            <div class="fact-chip">
+              <span>内容范围</span>
+              <strong>7 天 / 1 张小地图</strong>
+            </div>
+            <div class="fact-chip">
+              <span>操作方式</span>
+              <strong>键盘与触屏</strong>
+            </div>
+          </div>
+
+          <div class="store-cta-row" aria-label="试玩入口">
+            <a class="store-cta primary" href="#play-now">立即试玩</a>
+            <a class="store-cta secondary" href="#chapter-guide">章节导览</a>
+          </div>
+
+          <div class="store-mini-meta" aria-label="发布信息">
+            <span>当前构建：Public Demo 0.3</span>
+            <span>平台：浏览器 / 零依赖静态页</span>
+            <span>状态：可公开试玩</span>
+          </div>
+        </article>
+      </section>
+
+      <section class="showcase-shell" id="chapter-guide" aria-label="章节导览">
+        <article class="paper release-paper chapter-showcase">
+          <div class="chapter-showcase-head">
+            <div>
+              <p class="eyebrow">章节导览</p>
+              <h2>从任意已解锁的一天继续</h2>
+            </div>
+            <p class="chapter-showcase-kicker">自动存档会保留在当前浏览器。</p>
+          </div>
+
+          <div class="chapter-showcase-grid">
+            <section class="chapter-intro" aria-label="章节导览说明">
+              <p class="chapter-pane-label">跳转说明</p>
+              <p class="chapter-showcase-copy" id="demo-status">
+                当前试玩会自动存档。章节按钮可以回到已解锁天数的清晨开头。
+              </p>
+              <button class="panel-btn chapter-reset-btn" id="reset-demo" type="button">重新开始这一周</button>
+            </section>
+
+            <section class="chapter-board" aria-label="章节跳转">
+              <p class="chapter-pane-label">章节列表</p>
+              <div class="jump-grid chapter-jump-grid" id="jump-grid" aria-label="章节跳转"></div>
+            </section>
+          </div>
+        </article>
+      </section>
+
+      <section class="game-shell" id="play-now">
+        <div class="canvas-frame">
+          <canvas id="game" width="288" height="224" aria-label="雾铃小镇七日试玩 Demo"></canvas>
+          <div class="overlay hint" id="hint"></div>
+          <div class="overlay toast" id="toast"></div>
+        </div>
+
+        <aside class="side-panel">
+          <section class="paper">
+            <h2>本周进度</h2>
+            <div class="day-strip" id="day-strip" aria-label="七天进度"></div>
+            <p class="paper-note" id="progress-caption">第 1 天：初到雾铃小镇。</p>
+          </section>
+
+          <section class="paper">
+            <h2>今日目标</h2>
+            <p id="objective">先和村口的阿栀打个招呼。</p>
+          </section>
+
+          <section class="paper">
+            <h2>口袋小物</h2>
+            <ul id="inventory">
+              <li>暂时还没有。</li>
+            </ul>
+          </section>
+
+          <section class="paper">
+            <h2>操作</h2>
+            <ul class="controls-list">
+              <li><kbd>WASD</kbd> / <kbd>方向键</kbd> 移动</li>
+              <li><kbd>E</kbd> / <kbd>空格</kbd> / <kbd>回车</kbd> 交谈与互动</li>
+              <li>手机上可以直接使用下方触屏按钮</li>
+            </ul>
+          </section>
+        </aside>
+      </section>
+
+      <section class="touch-panel" aria-label="触屏操作">
+        <div class="dpad">
+          <button class="touch-btn up" data-move="up">上</button>
+          <button class="touch-btn left" data-move="left">左</button>
+          <button class="touch-btn right" data-move="right">右</button>
+          <button class="touch-btn down" data-move="down">下</button>
+        </div>
+        <button class="touch-btn interact" id="touch-interact">交谈 / 互动</button>
+      </section>
+    </main>
+
+    <section class="dialogue hidden" id="dialogue">
+      <div class="dialogue-card">
+        <p class="dialogue-speaker" id="dialogue-speaker">旁白</p>
+        <p class="dialogue-text" id="dialogue-text"></p>
+        <button class="dialogue-next" id="dialogue-next">继续</button>
+      </div>
+    </section>
+
+    <section class="day-note hidden" id="day-note">
+      <div class="day-note-card">
+        <p class="day-note-kicker">今日小记</p>
+        <p class="day-note-text" id="day-note-text"></p>
+        <button class="dialogue-next" id="restart-day">继续</button>
+      </div>
+    </section>
+
+    <section class="title-screen" id="title-screen">
+      <div class="title-card">
+        <p class="day-note-kicker">春日像素试玩</p>
+        <h2>把风铃集会一点点等到真的开始</h2>
+        <p class="title-lede">
+          你会在七个游戏日里认识村民、完成小委托、看桥边慢慢变得热闹，最后走进风铃集会当天的黄昏。
+        </p>
+
+        <div class="title-grid">
+          <article class="title-panel">
+            <h3>这次能玩到什么</h3>
+            <p>完整体验第一周主线，从初到小镇一直走到风铃集会当天。</p>
+          </article>
+          <article class="title-panel">
+            <h3>推荐怎么玩</h3>
+            <p>第一次建议按顺序慢慢走；回看时可以使用章节导览直接跳回已解锁天数。</p>
+          </article>
+          <article class="title-panel">
+            <h3>这次多了什么</h3>
+            <p>增加了自动存档、章节进度、试玩总结和更适合发给别人直接体验的包装。</p>
+          </article>
+        </div>
+
+        <div class="title-actions">
+          <button class="panel-btn primary" id="title-start" type="button">开始新试玩</button>
+          <button class="panel-btn secondary hidden" id="title-continue" type="button">
+            继续上次进度
+          </button>
+        </div>
+
+        <p class="title-save-note" id="title-save-note">
+          试玩会自动存档在当前浏览器，你随时可以回来继续。
+        </p>
+      </div>
+    </section>
+
+    <section class="ending hidden" id="ending">
+      <div class="ending-card">
+        <p class="day-note-kicker">试玩完成</p>
+        <h2>风终于为人群响了一次</h2>
+        <p class="title-lede" id="ending-summary">
+          这一周的布条、桥灯、纸签和人心都在桥边站到了一起。
+        </p>
+
+        <div class="ending-stats">
+          <div class="ending-stat">
+            <span>解锁天数</span>
+            <strong id="ending-days">7 / 7</strong>
+          </div>
+          <div class="ending-stat">
+            <span>收集小物</span>
+            <strong id="ending-items">0 件</strong>
+          </div>
+          <div class="ending-stat">
+            <span>主线状态</span>
+            <strong>已完成</strong>
+          </div>
+        </div>
+
+        <div class="title-actions">
+          <button class="panel-btn primary" id="ending-restart" type="button">
+            重新开始七天试玩
+          </button>
+          <button class="panel-btn secondary" id="ending-continue" type="button">
+            留在第七天继续漫游
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <script src="script.js"></script>
+  </body>
+</html>
