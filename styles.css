@@ -179,31 +179,18 @@ body {
 .cover-image-overlay {
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(35, 24, 16, 0.02), rgba(35, 24, 16, 0.04) 40%, rgba(35, 24, 16, 0.48) 100%);
-}
-
-.cover-badge {
-  position: absolute;
-  top: 18px;
-  left: 18px;
-  margin: 0;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(255, 247, 232, 0.9);
-  color: #5a3d2a;
-  font-size: 0.78rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+    linear-gradient(180deg, rgba(35, 24, 16, 0.42), rgba(35, 24, 16, 0.12) 34%, rgba(35, 24, 16, 0.02) 72%);
 }
 
 .cover-title-mark {
-  left: 24px;
-  bottom: 22px;
+  top: 22px;
+  left: 22px;
   display: grid;
   gap: 4px;
-  padding: 14px 16px;
+  max-width: min(52%, 320px);
+  padding: 12px 16px 13px;
   border-radius: 18px;
-  background: rgba(66, 47, 33, 0.64);
+  background: rgba(66, 47, 33, 0.58);
   color: #fff7e8;
   backdrop-filter: blur(4px);
 }
@@ -221,17 +208,16 @@ body {
   color: rgba(255, 247, 232, 0.82);
 }
 
-.poster-note {
-  margin: 12px 4px 0;
-  font-size: 0.86rem;
-  color: rgba(47, 36, 27, 0.66);
-}
-
 .game-shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;
   gap: 24px;
   align-items: start;
+}
+
+.game-main-column {
+  display: grid;
+  gap: 18px;
 }
 
 .canvas-frame {
@@ -627,17 +613,22 @@ code {
 
 .touch-panel {
   display: none;
-  gap: 18px;
+  gap: 16px;
   justify-content: center;
   align-items: center;
-  margin-top: 22px;
+  margin-top: 0;
+}
+
+.controls-panel {
+  display: grid;
+  gap: 6px;
 }
 
 .dpad {
   display: grid;
-  grid-template-columns: repeat(3, 62px);
-  grid-template-rows: repeat(2, 62px);
-  gap: 10px;
+  grid-template-columns: repeat(3, 58px);
+  grid-template-rows: repeat(2, 58px);
+  gap: 8px;
   grid-template-areas:
     ". up ."
     "left down right";
@@ -645,13 +636,13 @@ code {
 
 .touch-btn {
   border: 1px solid rgba(133, 93, 66, 0.22);
-  border-radius: 18px;
+  border-radius: 16px;
   background:
     linear-gradient(180deg, rgba(255, 252, 246, 0.94), rgba(240, 231, 216, 0.94));
   color: #4c3728;
   font-family: "Trebuchet MS", "Gill Sans", sans-serif;
-  font-size: 0.96rem;
-  box-shadow: 0 12px 30px rgba(31, 23, 17, 0.08);
+  font-size: 0.92rem;
+  box-shadow: 0 10px 24px rgba(31, 23, 17, 0.08);
 }
 
 .touch-btn:active,
@@ -676,7 +667,7 @@ code {
 }
 
 .touch-btn.interact {
-  padding: 16px 24px;
+  padding: 14px 22px;
 }
 
 .dialogue,
@@ -860,6 +851,10 @@ code {
     flex-wrap: wrap;
   }
 
+  .game-main-column {
+    gap: 16px;
+  }
+
   .title-grid,
   .ending-stats {
     grid-template-columns: 1fr;
@@ -878,6 +873,10 @@ code {
 
   .canvas-frame {
     padding: 12px;
+  }
+
+  .game-main-column {
+    gap: 14px;
   }
 
   .hint {
@@ -924,7 +923,7 @@ code {
   .cover-title-mark {
     left: 14px;
     right: 14px;
-    bottom: 14px;
+    top: 14px;
   }
 
   .cover-title-mark span {
@@ -955,5 +954,26 @@ code {
   .title-actions .panel-btn {
     width: 100%;
     min-width: 0;
+  }
+
+  .touch-panel {
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-end;
+  }
+
+  .dpad {
+    grid-template-columns: repeat(3, 52px);
+    grid-template-rows: repeat(2, 52px);
+    gap: 7px;
+  }
+
+  .touch-btn {
+    font-size: 0.88rem;
+  }
+
+  .touch-btn.interact {
+    min-width: 136px;
+    padding: 13px 18px;
   }
 }

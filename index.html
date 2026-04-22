@@ -63,14 +63,12 @@
               alt="雾铃小镇的发布主视觉：黄昏桥边挂着风铃和布条，村民站在桥前看向发光的面包房与河面。"
             />
             <div class="cover-image-overlay">
-              <p class="cover-badge">Store Capsule</p>
               <div class="cover-title-mark">
                 <strong>雾铃小镇</strong>
                 <span>Spring Wind Chime Week Demo</span>
               </div>
             </div>
           </div>
-          <p class="poster-note">已导出本地主视觉：<code>assets/images/cover-art.jpg</code></p>
         </article>
 
         <article class="paper release-paper release-paper-hero">
@@ -106,12 +104,6 @@
             <a class="store-cta primary" href="#play-now">立即试玩</a>
             <a class="store-cta secondary" href="#chapter-guide">章节导览</a>
           </div>
-
-          <div class="store-mini-meta" aria-label="发布信息">
-            <span>当前构建：Public Demo 0.3</span>
-            <span>平台：浏览器 / 零依赖静态页</span>
-            <span>状态：可公开试玩</span>
-          </div>
         </article>
       </section>
 
@@ -143,10 +135,31 @@
       </section>
 
       <section class="game-shell" id="play-now">
-        <div class="canvas-frame">
-          <canvas id="game" width="288" height="224" aria-label="雾铃小镇七日试玩 Demo"></canvas>
-          <div class="overlay hint" id="hint"></div>
-          <div class="overlay toast" id="toast"></div>
+        <div class="game-main-column">
+          <div class="canvas-frame">
+            <canvas id="game" width="288" height="224" aria-label="雾铃小镇七日试玩 Demo"></canvas>
+            <div class="overlay hint" id="hint"></div>
+            <div class="overlay toast" id="toast"></div>
+          </div>
+
+          <section class="paper controls-panel">
+            <h2>操作</h2>
+            <ul class="controls-list">
+              <li><kbd>WASD</kbd> / <kbd>方向键</kbd> 移动</li>
+              <li><kbd>E</kbd> / <kbd>空格</kbd> / <kbd>回车</kbd> 交谈与互动</li>
+              <li>手机上可以直接使用下方触屏按钮</li>
+            </ul>
+          </section>
+
+          <section class="touch-panel" aria-label="触屏操作">
+            <div class="dpad">
+              <button class="touch-btn up" data-move="up">上</button>
+              <button class="touch-btn left" data-move="left">左</button>
+              <button class="touch-btn right" data-move="right">右</button>
+              <button class="touch-btn down" data-move="down">下</button>
+            </div>
+            <button class="touch-btn interact" id="touch-interact">交谈 / 互动</button>
+          </section>
         </div>
 
         <aside class="side-panel">
@@ -167,26 +180,7 @@
               <li>暂时还没有。</li>
             </ul>
           </section>
-
-          <section class="paper">
-            <h2>操作</h2>
-            <ul class="controls-list">
-              <li><kbd>WASD</kbd> / <kbd>方向键</kbd> 移动</li>
-              <li><kbd>E</kbd> / <kbd>空格</kbd> / <kbd>回车</kbd> 交谈与互动</li>
-              <li>手机上可以直接使用下方触屏按钮</li>
-            </ul>
-          </section>
         </aside>
-      </section>
-
-      <section class="touch-panel" aria-label="触屏操作">
-        <div class="dpad">
-          <button class="touch-btn up" data-move="up">上</button>
-          <button class="touch-btn left" data-move="left">左</button>
-          <button class="touch-btn right" data-move="right">右</button>
-          <button class="touch-btn down" data-move="down">下</button>
-        </div>
-        <button class="touch-btn interact" id="touch-interact">交谈 / 互动</button>
       </section>
     </main>
 
