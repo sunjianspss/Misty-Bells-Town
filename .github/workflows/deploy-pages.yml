@@ -35,6 +35,8 @@ jobs:
           cp index.html _site/
           cp styles.css _site/
           cp script.js _site/
+          cp shared-world.js _site/
+          cp shared-world-config.js _site/
           cp -R assets _site/assets
           touch _site/.nojekyll
 

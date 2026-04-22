@@ -180,6 +180,27 @@
               <li>暂时还没有。</li>
             </ul>
           </section>
+
+          <section class="paper shared-traces-panel" aria-label="桥边共享风痕">
+            <div class="shared-traces-head">
+              <div>
+                <h2>桥边共享风痕</h2>
+                <p class="shared-traces-kicker" id="shared-traces-kicker">春 5 起，桥边会开始替人留下痕迹。</p>
+              </div>
+              <span class="shared-mode-pill" id="shared-mode-pill">本机试装</span>
+            </div>
+            <p class="paper-note" id="shared-traces-status">
+              现在还是单人剧情阶段。等走到第五天，桥边会开放共享风痕。
+            </p>
+            <p class="shared-traces-count" id="shared-traces-count">最近风痕：0 条</p>
+            <ul class="shared-traces-list" id="shared-traces-list">
+              <li class="shared-trace-empty">桥边还没有新的风痕。</li>
+            </ul>
+            <div class="shared-traces-actions">
+              <button class="panel-btn secondary" id="shared-traces-refresh" type="button">刷新桥边风痕</button>
+              <button class="panel-btn primary" id="shared-traces-compose" type="button">在桥边留下风痕</button>
+            </div>
+          </section>
         </aside>
       </section>
 
@@ -243,6 +264,63 @@
         <p class="day-note-kicker">今日小记</p>
         <p class="day-note-text" id="day-note-text"></p>
         <button class="dialogue-next" id="restart-day">继续</button>
+      </div>
+    </section>
+
+    <section class="shared-trace-modal hidden" id="shared-trace-modal">
+      <div class="shared-trace-modal-card">
+        <p class="day-note-kicker">桥边共享风痕</p>
+        <h2>把一句话交给桥边的风</h2>
+        <p class="shared-modal-lede" id="shared-trace-modal-meta">
+          走到桥边后，你可以留下一句短短的话，让后来的人也看见。
+        </p>
+
+        <div class="shared-trace-form">
+          <label class="shared-field">
+            <span>留一句什么</span>
+            <textarea
+              id="shared-trace-input"
+              maxlength="28"
+              rows="3"
+              placeholder="比如：愿今天的风替晚到的人留一盏灯。"
+            ></textarea>
+          </label>
+
+          <fieldset class="shared-color-field">
+            <legend>挂成什么颜色</legend>
+            <div class="shared-color-grid">
+              <label class="shared-color-option shared-color-option-sky">
+                <input type="radio" name="shared-trace-color" value="晴蓝" checked />
+                <span>晴蓝</span>
+              </label>
+              <label class="shared-color-option shared-color-option-ivory">
+                <input type="radio" name="shared-trace-color" value="米白" />
+                <span>米白</span>
+              </label>
+              <label class="shared-color-option shared-color-option-gold">
+                <input type="radio" name="shared-trace-color" value="杏黄" />
+                <span>杏黄</span>
+              </label>
+              <label class="shared-color-option shared-color-option-moss">
+                <input type="radio" name="shared-trace-color" value="苔绿" />
+                <span>苔绿</span>
+              </label>
+              <label class="shared-color-option shared-color-option-rose">
+                <input type="radio" name="shared-trace-color" value="晚霞粉" />
+                <span>晚霞粉</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <p class="shared-trace-feedback" id="shared-trace-feedback">
+            会自动带上你当前这一天的天气与时间痕迹。
+          </p>
+        </div>
+
+        <div class="title-actions shared-trace-actions">
+          <button class="panel-btn primary" id="shared-trace-submit" type="button">挂上这一条风痕</button>
+          <button class="panel-btn secondary" id="shared-trace-cancel" type="button">先不留下</button>
+        </div>
       </div>
     </section>
 
@@ -316,6 +394,8 @@
       </div>
     </section>
 
+    <script src="shared-world-config.js"></script>
+    <script src="shared-world.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

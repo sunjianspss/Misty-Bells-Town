@@ -12,6 +12,19 @@
     guideObjective: document.getElementById("guide-objective"),
     guideNextStep: document.getElementById("guide-next-step"),
     inventory: document.getElementById("inventory"),
+    sharedTracesKicker: document.getElementById("shared-traces-kicker"),
+    sharedTracesStatus: document.getElementById("shared-traces-status"),
+    sharedTracesCount: document.getElementById("shared-traces-count"),
+    sharedTracesList: document.getElementById("shared-traces-list"),
+    sharedModePill: document.getElementById("shared-mode-pill"),
+    sharedTracesRefresh: document.getElementById("shared-traces-refresh"),
+    sharedTracesCompose: document.getElementById("shared-traces-compose"),
+    sharedTraceModal: document.getElementById("shared-trace-modal"),
+    sharedTraceModalMeta: document.getElementById("shared-trace-modal-meta"),
+    sharedTraceInput: document.getElementById("shared-trace-input"),
+    sharedTraceFeedback: document.getElementById("shared-trace-feedback"),
+    sharedTraceSubmit: document.getElementById("shared-trace-submit"),
+    sharedTraceCancel: document.getElementById("shared-trace-cancel"),
     dayStrip: document.getElementById("day-strip"),
     progressCaption: document.getElementById("progress-caption"),
     demoStatus: document.getElementById("demo-status"),
@@ -53,6 +66,8 @@
   const WALK_MS = 130;
   const DAY_TOTAL = 7;
   const SAVE_KEY = "wuling-demo-save-v2";
+  const SHARED_TRACE_LIMIT = 8;
+  const SHARED_TRACE_POST_KEY = "wuling-demo-shared-posts-v1";
   const dayChapters = [
     { day: 1, short: "春1", title: "初到小镇", summary: "先让雾铃小镇认识你。" },
     { day: 2, short: "春2", title: "告示贴上", summary: "风铃集会第一次被正式说出口。" },
@@ -295,6 +310,20 @@
       return false;
     }
   })();
+
+  const sharedWorldClient =
+    window.MistyBellsSharedWorld && typeof window.MistyBellsSharedWorld.createClient === "function"
+      ? window.MistyBellsSharedWorld.createClient()
+      : null;
+
+  const sharedWorldState = {
+    traces: [],
+    loading: false,
+    mode: sharedWorldClient && sharedWorldClient.remoteEnabled ? "supabase" : "local",
+    warning: "",
+    modalOpen: false,
+    submitting: false,
+  };
 
   const audioState = {
     currentKey: null,
@@ -937,7 +966,343 @@
   }
 
   function isModalOpen() {
-    return !refs.titleScreen.classList.contains("hidden") || !refs.ending.classList.contains("hidden");
+    return (
+      !refs.titleScreen.classList.contains("hidden") ||
+      !refs.ending.classList.contains("hidden") ||
+      !refs.sharedTraceModal.classList.contains("hidden")
+    );
+  }
+
+  function sharedTracesUnlocked() {
+    return state.currentDayIndex >= 5;
+  }
+
+  function playerNearBridge() {
+    const bridgeTiles = [
+      { x: 11, y: 10 },
+      { x: 12, y: 10 },
+      { x: 13, y: 10 },
+      { x: 14, y: 10 },
+      { x: 12, y: 9 },
+      { x: 13, y: 9 },
+    ];
+    return bridgeTiles.some((tile) => Math.abs(player.x - tile.x) + Math.abs(player.y - tile.y) <= 1);
+  }
+
+  function selectedSharedRibbonColor() {
+    const checked = document.querySelector('input[name="shared-trace-color"]:checked');
+    return checked ? checked.value : "晴蓝";
+  }
+
+  function normalizeSharedTraceText(raw) {
+    return String(raw || "")
+      .replace(/\s+/g, " ")
+      .replace(/[<>]/g, "")
+      .trim();
+  }
+
+  function readSharedPostHistory() {
+    if (!canPersist) {
+      return [];
+    }
+
+    try {
+      const raw = window.localStorage.getItem(SHARED_TRACE_POST_KEY);
+      if (!raw) {
+        return [];
+      }
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.filter((value) => Number.isFinite(value)) : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function writeSharedPostHistory(history) {
+    if (!canPersist) {
+      return;
+    }
+    window.localStorage.setItem(SHARED_TRACE_POST_KEY, JSON.stringify(history.slice(-12)));
+  }
+
+  function recentSharedTraceCount() {
+    const now = Date.now();
+    const oneDayAgo = now - 24 * 60 * 60 * 1000;
+    return readSharedPostHistory().filter((stamp) => stamp >= oneDayAgo).length;
+  }
+
+  function relativeTraceTime(value) {
+    const time = new Date(value).getTime();
+    if (!Number.isFinite(time)) {
+      return "刚刚";
+    }
+    const diff = Date.now() - time;
+    const minute = 60 * 1000;
+    const hour = 60 * minute;
+    const day = 24 * hour;
+    if (diff < minute) {
+      return "刚刚";
+    }
+    if (diff < hour) {
+      return `${Math.max(1, Math.round(diff / minute))} 分钟前`;
+    }
+    if (diff < day) {
+      return `${Math.max(1, Math.round(diff / hour))} 小时前`;
+    }
+    return `${Math.max(1, Math.round(diff / day))} 天前`;
+  }
+
+  function traceMetaLabel(trace) {
+    return `春 ${trace.storyDay} · ${trace.weatherTag} · ${relativeTraceTime(trace.createdAt)}`;
+  }
+
+  function traceColorClass(name) {
+    switch (name) {
+      case "晴蓝":
+        return "sky";
+      case "米白":
+        return "ivory";
+      case "杏黄":
+        return "gold";
+      case "苔绿":
+        return "moss";
+      case "晚霞粉":
+        return "rose";
+      default:
+        return "ivory";
+    }
+  }
+
+  function defaultSharedTraceMessage() {
+    if (state.currentDayIndex >= 7) {
+      return "愿今天这一声，替后来的人也把桥边慢慢等热。";
+    }
+    if (state.currentDayIndex === 6) {
+      return "愿桥灯一亮，晚风就记得把明天带过桥。";
+    }
+    return "愿今天这阵风，替后来的人先碰一碰桥边的颜色。";
+  }
+
+  function sharedTraceFlavorLine(npcId) {
+    if (!sharedWorldState.traces.length || state.currentDayIndex < 5) {
+      return null;
+    }
+
+    if (npcId === "azhi") {
+      return sharedWorldState.traces.length >= 4
+        ? "这几天桥边多了好多陌生人的话，像是连外乡人的风也肯在这里停一下。"
+        : "前几天也有外乡人在桥边留了短短一句。我每次路过，都觉得桥在偷偷把人记住。";
+    }
+    if (npcId === "linmai") {
+      return sharedWorldState.traces.length >= 4
+        ? "连桥边那几条陌生人的布痕都开始有了人气。热闹要真到了，大概就会先长成这种样子。"
+        : "桥边最近多了一两句陌生人的话。没见着人，可看见那点痕迹，面包房都像更愿意早点热起来。";
+    }
+    if (npcId === "shenyan") {
+      return sharedWorldState.traces.length >= 4
+        ? "这座桥现在不只替村里人留声了。有人来过、站过、把一句话交给风，这桥就比前几天更像在等人。"
+        : "桥边多了句陌生人的话以后，我忽然更信‘等风’这件事不是白等。";
+    }
+    return null;
+  }
+
+  function renderSharedTraceList() {
+    if (!refs.sharedTracesList) {
+      return;
+    }
+
+    refs.sharedTracesList.innerHTML = "";
+    if (!sharedTracesUnlocked()) {
+      const li = document.createElement("li");
+      li.className = "shared-trace-empty";
+      li.textContent = "先把这周剧情走到春 5，桥边才会开始替人留下痕迹。";
+      refs.sharedTracesList.appendChild(li);
+      return;
+    }
+
+    if (!sharedWorldState.traces.length) {
+      const li = document.createElement("li");
+      li.className = "shared-trace-empty";
+      li.textContent = "桥边还没有新的风痕。你会是今天先把一句话交给风的人吗？";
+      refs.sharedTracesList.appendChild(li);
+      return;
+    }
+
+    sharedWorldState.traces.slice(0, SHARED_TRACE_LIMIT).forEach((trace) => {
+      const item = document.createElement("li");
+      item.className = `shared-trace-item color-${traceColorClass(trace.ribbonColor)}`;
+
+      const message = document.createElement("p");
+      message.className = "shared-trace-message";
+      message.textContent = trace.message;
+
+      const meta = document.createElement("p");
+      meta.className = "shared-trace-meta";
+      meta.textContent = traceMetaLabel(trace);
+
+      item.appendChild(message);
+      item.appendChild(meta);
+      refs.sharedTracesList.appendChild(item);
+    });
+  }
+
+  function syncSharedTracesUi() {
+    if (!refs.sharedTracesStatus) {
+      return;
+    }
+
+    const unlocked = sharedTracesUnlocked();
+    const nearBridge = playerNearBridge();
+
+    if (!unlocked) {
+      refs.sharedTracesKicker.textContent = "春 5 起，桥边会开始替人留下痕迹。";
+      refs.sharedTracesStatus.textContent = "现在还是单人剧情阶段。等走到第五天，桥边会开放共享风痕。";
+      refs.sharedTracesCount.textContent = "最近风痕：0 条";
+      refs.sharedModePill.textContent = sharedWorldClient && sharedWorldClient.remoteEnabled ? "远端已就绪" : "本机试装";
+      refs.sharedModePill.className = sharedWorldClient && sharedWorldClient.remoteEnabled ? "shared-mode-pill live" : "shared-mode-pill";
+      refs.sharedTracesRefresh.disabled = true;
+      refs.sharedTracesCompose.disabled = true;
+      refs.sharedTracesCompose.textContent = "走到春 5 后开放";
+      renderSharedTraceList();
+      return;
+    }
+
+    refs.sharedTracesKicker.textContent = nearBridge
+      ? "你已经走到桥边了，可以把一句短短的话交给风。"
+      : "走到桥边再留痕，会更像真的把话挂给风听。";
+
+    if (sharedWorldState.loading) {
+      refs.sharedTracesStatus.textContent = "正在收一收桥边的风痕。";
+    } else if (sharedWorldState.warning) {
+      refs.sharedTracesStatus.textContent = sharedWorldState.warning;
+    } else if (sharedWorldState.mode === "supabase") {
+      refs.sharedTracesStatus.textContent = "这里显示的是最近几条公共桥边风痕，后来的玩家也会看见。";
+    } else {
+      refs.sharedTracesStatus.textContent = "当前先以本机模式运行。把 Supabase 配好后，这里会变成真正共享的桥边痕迹。";
+    }
+
+    refs.sharedTracesCount.textContent = `最近风痕：${sharedWorldState.traces.length} 条`;
+    refs.sharedModePill.textContent =
+      sharedWorldState.mode === "supabase"
+        ? "公共桥边"
+        : sharedWorldState.mode === "local-fallback"
+          ? "远端回退"
+          : "本机试装";
+    refs.sharedModePill.className =
+      sharedWorldState.mode === "supabase"
+        ? "shared-mode-pill live"
+        : sharedWorldState.mode === "local-fallback"
+          ? "shared-mode-pill fallback"
+          : "shared-mode-pill";
+    refs.sharedTracesRefresh.disabled = sharedWorldState.loading;
+    refs.sharedTracesCompose.disabled = sharedWorldState.submitting;
+    refs.sharedTracesCompose.textContent = nearBridge ? "在桥边留下风痕" : "先走到桥边再留痕";
+    renderSharedTraceList();
+  }
+
+  async function loadSharedTraces(force) {
+    if (!sharedTracesUnlocked() || !sharedWorldClient) {
+      syncSharedTracesUi();
+      return;
+    }
+
+    if (sharedWorldState.loading && !force) {
+      return;
+    }
+
+    sharedWorldState.loading = true;
+    syncSharedTracesUi();
+    const result = await sharedWorldClient.loadRecent(SHARED_TRACE_LIMIT);
+    sharedWorldState.loading = false;
+    sharedWorldState.mode = result.mode || sharedWorldState.mode;
+    sharedWorldState.warning = result.warning || "";
+    sharedWorldState.traces = Array.isArray(result.traces) ? result.traces : [];
+    syncSharedTracesUi();
+  }
+
+  function openSharedTraceModal(fromBridge) {
+    if (!sharedTracesUnlocked()) {
+      showToast("先把剧情走到春 5，桥边才会开放共享风痕。");
+      return;
+    }
+
+    if (!playerNearBridge()) {
+      showToast("走到桥边再留痕，会更像真的把话挂给风听。");
+      return;
+    }
+
+    sharedWorldState.modalOpen = true;
+    refs.sharedTraceModal.classList.remove("hidden");
+    refs.sharedTraceModalMeta.textContent = `你现在站在桥边，当前是第 ${state.currentDayIndex} 天、${state.weather}。这句话会和天气一起被后来的人看见。`;
+    refs.sharedTraceInput.value = fromBridge ? "" : refs.sharedTraceInput.value;
+    if (!refs.sharedTraceInput.value.trim()) {
+      refs.sharedTraceInput.value = defaultSharedTraceMessage();
+    }
+    refs.sharedTraceFeedback.classList.remove("error");
+    refs.sharedTraceFeedback.textContent = "会自动带上你当前这一天的天气与时间痕迹。";
+    refs.sharedTraceInput.focus();
+  }
+
+  function closeSharedTraceModal() {
+    sharedWorldState.modalOpen = false;
+    refs.sharedTraceModal.classList.add("hidden");
+    refs.sharedTraceFeedback.classList.remove("error");
+    syncSharedTracesUi();
+  }
+
+  async function submitSharedTrace() {
+    if (!sharedWorldClient || sharedWorldState.submitting) {
+      return;
+    }
+
+    const message = normalizeSharedTraceText(refs.sharedTraceInput.value);
+    if (message.length < 2 || message.length > 28) {
+      refs.sharedTraceFeedback.classList.add("error");
+      refs.sharedTraceFeedback.textContent = "把这句话控制在 2 到 28 个字之间，会更像桥边轻轻挂着的一条风痕。";
+      return;
+    }
+
+    if (/(https?:\/\/|www\.|@|[0-9]{6,})/i.test(message)) {
+      refs.sharedTraceFeedback.classList.add("error");
+      refs.sharedTraceFeedback.textContent = "桥边不收链接、长串数字或引流信息，只收一句安静留下来的话。";
+      return;
+    }
+
+    if (recentSharedTraceCount() >= 3) {
+      refs.sharedTraceFeedback.classList.add("error");
+      refs.sharedTraceFeedback.textContent = "今天这位外乡人已经留过几句了，先把桥边让给后来的人吧。";
+      return;
+    }
+
+    sharedWorldState.submitting = true;
+    refs.sharedTraceSubmit.disabled = true;
+    refs.sharedTraceFeedback.classList.remove("error");
+    refs.sharedTraceFeedback.textContent = "正在把这句话挂到桥边。";
+
+    const result = await sharedWorldClient.submitTrace({
+      message,
+      ribbonColor: selectedSharedRibbonColor(),
+      weatherTag: state.weather,
+      storyDay: Math.max(5, Math.min(7, state.currentDayIndex)),
+      authorLabel: "桥边来客",
+    });
+
+    sharedWorldState.submitting = false;
+    refs.sharedTraceSubmit.disabled = false;
+
+    if (result.ok) {
+      writeSharedPostHistory([...readSharedPostHistory(), Date.now()]);
+      refs.sharedTraceInput.value = "";
+      sharedWorldState.warning = result.warning || "";
+      await loadSharedTraces(true);
+      closeSharedTraceModal();
+      showToast(result.mode === "supabase" ? "你的风痕已经挂到桥边了" : "这条风痕先保存在本机桥边", "quest");
+      persistProgress();
+      return;
+    }
+
+    refs.sharedTraceFeedback.classList.add("error");
+    refs.sharedTraceFeedback.textContent = "这阵风没把话稳稳挂上去，等一会儿再试一次吧。";
   }
 
   function createStoryStateForDay(dayIndex, unlockedDay) {
@@ -1153,6 +1518,8 @@
     syncHud();
     syncInventory();
     syncMetaUi();
+    syncSharedTracesUi();
+    loadSharedTraces(false);
     syncGameSceneAudio();
     return true;
   }
@@ -1407,6 +1774,7 @@
       syncHud();
       syncInventory();
       syncMetaUi();
+      syncSharedTracesUi();
       persistProgress();
       syncGameSceneAudio();
     }
@@ -1438,6 +1806,7 @@
   function resetCommonUiState() {
     hideDayNote();
     closeDialogue();
+    closeSharedTraceModal();
     hideEnding();
     stopAudioPreview(false);
     setAudioStatus("还没有开始试听。建议戴耳机听一下第一轮发布素材的整体方向。");
@@ -1455,6 +1824,8 @@
     syncHud();
     syncInventory();
     syncMetaUi();
+    syncSharedTracesUi();
+    loadSharedTraces(false);
     syncGameSceneAudio();
     if (shouldPersist !== false) {
       persistProgress();
@@ -1909,6 +2280,16 @@
       }
     }
 
+    if (sharedTracesUnlocked()) {
+      props.push({
+        id: "shared-traces",
+        label: playerNearBridge() ? "留痕" : "翻看",
+        x: 13,
+        y: 10,
+        name: "桥边风痕绳",
+      });
+    }
+
     props.forEach((prop) => {
       const distance = Math.abs(player.x - prop.x) + Math.abs(player.y - prop.y);
       if (distance <= 1) {
@@ -2028,9 +2409,12 @@
         return;
       }
 
-      openDialogue([
-        { speaker: "阿栀", text: "今天的第一声真的有好多人一起听见了。我本来想记住它，后来发现它自己已经把我记住了。" },
-      ]);
+      openDialogue(
+        [
+          { speaker: "阿栀", text: "今天的第一声真的有好多人一起听见了。我本来想记住它，后来发现它自己已经把我记住了。" },
+          ...(sharedTraceFlavorLine("azhi") ? [{ speaker: "阿栀", text: sharedTraceFlavorLine("azhi") }] : []),
+        ],
+      );
       return;
     }
 
@@ -2133,9 +2517,12 @@
         return;
       }
 
-      openDialogue([
-        { speaker: "阿栀", text: "今天终于不只是安安静静地等了。桥边一有颜色，我连走路都想跟着跳一下。" },
-      ]);
+      openDialogue(
+        [
+          { speaker: "阿栀", text: "今天终于不只是安安静静地等了。桥边一有颜色，我连走路都想跟着跳一下。" },
+          ...(sharedTraceFlavorLine("azhi") ? [{ speaker: "阿栀", text: sharedTraceFlavorLine("azhi") }] : []),
+        ],
+      );
       return;
     }
 
@@ -2316,9 +2703,12 @@
         return;
       }
 
-      openDialogue([
-        { speaker: "林麦", text: "今天忙得脚都没停，可真听见那一声的时候，心反倒静了一下。像这一周总算烤到了最刚好的火候。" },
-      ]);
+      openDialogue(
+        [
+          { speaker: "林麦", text: "今天忙得脚都没停，可真听见那一声的时候，心反倒静了一下。像这一周总算烤到了最刚好的火候。" },
+          ...(sharedTraceFlavorLine("linmai") ? [{ speaker: "林麦", text: sharedTraceFlavorLine("linmai") }] : []),
+        ],
+      );
       return;
     }
 
@@ -2372,9 +2762,12 @@
         return;
       }
 
-      openDialogue([
-        { speaker: "林麦", text: "今天做第三炉点心都没觉得累。热闹还没真正到，可它已经先长出香味来了。" },
-      ]);
+      openDialogue(
+        [
+          { speaker: "林麦", text: "今天做第三炉点心都没觉得累。热闹还没真正到，可它已经先长出香味来了。" },
+          ...(sharedTraceFlavorLine("linmai") ? [{ speaker: "林麦", text: sharedTraceFlavorLine("linmai") }] : []),
+        ],
+      );
       return;
     }
 
@@ -2600,9 +2993,12 @@
         return;
       }
 
-      openDialogue([
-        { speaker: "沈砚", text: "真正等到的那一声，往往不会比想象里更大。它只是刚刚好，刚好让你知道，这一周都没有白等。" },
-      ]);
+      openDialogue(
+        [
+          { speaker: "沈砚", text: "真正等到的那一声，往往不会比想象里更大。它只是刚刚好，刚好让你知道，这一周都没有白等。" },
+          ...(sharedTraceFlavorLine("shenyan") ? [{ speaker: "沈砚", text: sharedTraceFlavorLine("shenyan") }] : []),
+        ],
+      );
       return;
     }
 
@@ -2701,9 +3097,12 @@
         return;
       }
 
-      openDialogue([
-        { speaker: "沈砚", text: "安静过后再热闹起来的声音，通常会比一开始就热闹更动人一点。" },
-      ]);
+      openDialogue(
+        [
+          { speaker: "沈砚", text: "安静过后再热闹起来的声音，通常会比一开始就热闹更动人一点。" },
+          ...(sharedTraceFlavorLine("shenyan") ? [{ speaker: "沈砚", text: sharedTraceFlavorLine("shenyan") }] : []),
+        ],
+      );
       return;
     }
 
@@ -3853,6 +4252,9 @@
       case "wish-right":
         inspectWishPoint(target.id);
         break;
+      case "shared-traces":
+        openSharedTraceModal(true);
+        break;
       case "gate":
         inspectGate();
         break;
@@ -3874,6 +4276,7 @@
       player.moving = false;
       player.drawX = player.toX;
       player.drawY = player.toY;
+      syncSharedTracesUi();
       persistProgress();
     }
   }
@@ -4405,6 +4808,49 @@
     }
   }
 
+  function sharedTraceColorHex(name) {
+    switch (name) {
+      case "晴蓝":
+        return "#7aa8c3";
+      case "米白":
+        return "#efe7d7";
+      case "杏黄":
+        return "#d9ae66";
+      case "苔绿":
+        return "#87a26f";
+      case "晚霞粉":
+        return "#d58f73";
+      default:
+        return "#efe7d7";
+    }
+  }
+
+  function drawSharedBridgeTraces(now) {
+    if (!sharedTracesUnlocked() || !sharedWorldState.traces.length) {
+      return;
+    }
+
+    const anchorY = 9 * TILE - 17;
+    const anchorXs = [10 * TILE + 6, 11 * TILE + 3, 12 * TILE + 8, 13 * TILE + 5, 14 * TILE + 2, 15 * TILE - 2];
+    ctx.strokeStyle = "rgba(122, 91, 65, 0.78)";
+    ctx.beginPath();
+    ctx.moveTo(anchorXs[0] - 3, anchorY);
+    ctx.lineTo(anchorXs[Math.min(anchorXs.length - 1, sharedWorldState.traces.length)] + 6, anchorY + 1);
+    ctx.stroke();
+
+    sharedWorldState.traces.slice(0, anchorXs.length).forEach((trace, index) => {
+      const sway = Math.sin(now / 260 + index * 0.8) * 1.4;
+      const x = anchorXs[index];
+      const y = anchorY + 3 + (index % 2 === 0 ? 0 : 1);
+      ctx.fillStyle = "#7a5b41";
+      ctx.fillRect(x + 1, y - 3, 1, 4);
+      ctx.fillStyle = sharedTraceColorHex(trace.ribbonColor);
+      ctx.fillRect(x + sway, y, 3, 4);
+      ctx.fillStyle = "rgba(255, 249, 239, 0.72)";
+      ctx.fillRect(x + 1 + sway, y + 1, 1, 1);
+    });
+  }
+
   function drawFestivalAtmosphere(now) {
     if (state.currentDayIndex !== 7) {
       return;
@@ -4682,6 +5128,7 @@
     drawGate();
     drawLamps(now);
     drawFestivalPrep(now);
+    drawSharedBridgeTraces(now);
     drawFestivalAtmosphere(now);
     drawObjectiveSpark(now);
 
@@ -4738,6 +5185,18 @@
     const key = event.key.toLowerCase();
     const isMove = Object.prototype.hasOwnProperty.call(moveKeys, key);
     const isInteract = key === "e" || key === " " || key === "enter";
+
+    if (sharedWorldState.modalOpen) {
+      if (key === "escape") {
+        event.preventDefault();
+        closeSharedTraceModal();
+      } else if ((event.metaKey || event.ctrlKey) && key === "enter") {
+        event.preventDefault();
+        submitSharedTrace();
+      }
+      return;
+    }
+
     if (isMove || isInteract) {
       event.preventDefault();
       unlockGameAudio("键盘操作");
@@ -4774,6 +5233,19 @@
 
   refs.dialogueNext.addEventListener("click", advanceDialogue);
   refs.restartDay.addEventListener("click", handleDayNoteAction);
+  refs.sharedTracesRefresh.addEventListener("click", () => {
+    loadSharedTraces(true);
+  });
+  refs.sharedTracesCompose.addEventListener("click", () => {
+    openSharedTraceModal(false);
+  });
+  refs.sharedTraceSubmit.addEventListener("click", submitSharedTrace);
+  refs.sharedTraceCancel.addEventListener("click", closeSharedTraceModal);
+  refs.sharedTraceModal.addEventListener("click", (event) => {
+    if (event.target === refs.sharedTraceModal) {
+      closeSharedTraceModal();
+    }
+  });
   refs.touchInteract.addEventListener("click", () => {
     unlockGameAudio("触屏交互");
     handleInteraction();

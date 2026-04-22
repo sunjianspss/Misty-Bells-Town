@@ -20,6 +20,14 @@
 - GitHub Pages：<https://sunjianspss.github.io/Misty-Bells-Town/>
 - 当前仓库已经接入 GitHub Pages 工作流；后续继续向 `main` 分支推送就会自动更新线上版本
 
+## 异步共享风痕
+
+- 现在项目已经接入一层“异步共享痕迹”骨架：从春 5 开始，玩家可以在桥边留下短句风痕
+- 默认状态下先以本机模式运行，方便直接试玩与验证 UI
+- 一旦把根目录 [`shared-world-config.js`](shared-world-config.js) 填上 Supabase 配置并开启 `enableRemote`，桥边风痕就会切到真正的公共共享模式
+- 落地方案见 [`docs/async-shared-world-plan.md`](docs/async-shared-world-plan.md)
+- Supabase 表结构与 RLS 模板见 [`docs/supabase-bridge-traces.sql`](docs/supabase-bridge-traces.sql)
+
 ## 版本发布
 
 - 当前仓库版本号由根目录 `VERSION` 管理，当前基线为 `0.3.0`
@@ -73,6 +81,7 @@ python3 -m http.server 8000
 - 对话打开时仍会轻微压低 BGM 与环境音
 - 桌面端与移动端的游戏区布局已分开优化：桌面端更强调整体排版，手机端更强调操作顺序
 - 游戏底部新增“玩法指引”，会同步显示当前目标与离你最近的下一步
+- 第五天起新增“桥边共享风痕”：可以在桥边留下短句风痕，并在桥边看见最近的共享痕迹演出
 - 已保留 `scripts/build_music_variants.py` 与 `docs/bgm-redesign-plan.md` 作为后续再扩展 BGM 的方案储备
 - 已整理一版后续可执行的 BGM 改造方案：[`docs/bgm-redesign-plan.md`](docs/bgm-redesign-plan.md)
 
@@ -86,13 +95,24 @@ python3 -m http.server 8000
 - 自动存档、章节导览、试玩总结与重复游玩支持
 - 对外发布页封面、章节导览区、移动端触屏操作与底部玩法指引
 - 游戏内主背景音乐、环境音、脚步、对话、任务提示与桥边关键铃声
+- 异步共享风痕骨架：桥边风痕面板、留痕弹层、桥边共享纸签演出与 NPC 氛围回应
 
 ## 部署说明
 
 - 站点通过 GitHub Pages 发布
 - 发布工作流位于 `.github/workflows/deploy-pages.yml`
 - 版本发布工作流位于 `.github/workflows/release.yml`
-- 当前只发布站点所需的静态文件：`index.html`、`styles.css`、`script.js` 和 `assets/`
+- 当前发布站点所需的静态文件：`index.html`、`styles.css`、`script.js`、`shared-world.js`、`shared-world-config.js` 和 `assets/`
+
+## 配置 Supabase 共享风痕
+
+1. 在 Supabase SQL Editor 里执行 [`docs/supabase-bridge-traces.sql`](docs/supabase-bridge-traces.sql)
+2. 打开根目录 [`shared-world-config.js`](shared-world-config.js)
+3. 填入：
+   - `supabaseUrl`
+   - `supabaseAnonKey`
+   - 把 `enableRemote` 改成 `true`
+4. 推送到 `main` 后，GitHub Pages 上的桥边共享风痕就会切到公共模式
 
 ## 后续适合继续做
 
