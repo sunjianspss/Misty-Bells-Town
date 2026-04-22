@@ -211,13 +211,13 @@ body {
 .game-shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;
-  gap: 24px;
+  column-gap: 24px;
+  row-gap: 16px;
   align-items: start;
 }
 
 .game-main-column {
-  display: grid;
-  gap: 18px;
+  display: contents;
 }
 
 .canvas-frame {
@@ -283,8 +283,32 @@ body {
 }
 
 .side-panel {
-  display: grid;
-  gap: 16px;
+  display: contents;
+}
+
+.canvas-frame {
+  grid-column: 1;
+  grid-row: 1 / span 4;
+}
+
+.progress-panel {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.objective-panel {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.inventory-panel {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.controls-panel {
+  grid-column: 2;
+  grid-row: 4;
 }
 
 .paper {
@@ -592,6 +616,66 @@ body {
   margin-top: 8px;
 }
 
+.guide-shell {
+  margin-top: 24px;
+}
+
+.guide-panel {
+  padding: 22px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 252, 246, 0.88), transparent 34%),
+    linear-gradient(180deg, rgba(255, 248, 235, 0.9), rgba(233, 241, 226, 0.9));
+}
+
+.guide-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px 18px;
+}
+
+.guide-kicker {
+  max-width: 44ch;
+  color: rgba(47, 36, 27, 0.7);
+}
+
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.guide-card {
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(133, 93, 66, 0.14);
+  background: rgba(255, 249, 239, 0.78);
+}
+
+.guide-card h3 {
+  margin: 0 0 10px;
+  font-family: Georgia, "Palatino Linotype", serif;
+  font-size: 1rem;
+  color: #4f3929;
+}
+
+.guide-emphasis {
+  font-size: 1.08rem;
+  line-height: 1.72;
+  color: #4b3425;
+}
+
+.guide-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.guide-list li + li {
+  margin-top: 8px;
+}
+
 kbd {
   display: inline-block;
   padding: 2px 8px;
@@ -852,7 +936,22 @@ code {
   }
 
   .game-main-column {
+    display: grid;
     gap: 16px;
+  }
+
+  .side-panel {
+    display: grid;
+    gap: 16px;
+  }
+
+  .canvas-frame,
+  .progress-panel,
+  .objective-panel,
+  .inventory-panel,
+  .controls-panel {
+    grid-column: auto;
+    grid-row: auto;
   }
 
   .title-grid,
@@ -861,6 +960,10 @@ code {
   }
 
   .chapter-showcase-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -936,6 +1039,10 @@ code {
   }
 
   .chapter-showcase-head {
+    align-items: flex-start;
+  }
+
+  .guide-head {
     align-items: flex-start;
   }
 

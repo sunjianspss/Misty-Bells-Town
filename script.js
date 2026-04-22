@@ -9,6 +9,8 @@
     hudTime: document.getElementById("hud-time"),
     hudProgress: document.getElementById("hud-progress"),
     objective: document.getElementById("objective"),
+    guideObjective: document.getElementById("guide-objective"),
+    guideNextStep: document.getElementById("guide-next-step"),
     inventory: document.getElementById("inventory"),
     dayStrip: document.getElementById("day-strip"),
     progressCaption: document.getElementById("progress-caption"),
@@ -1278,6 +1280,9 @@
     state.objective = text;
     state.objectiveTarget = targetId || null;
     refs.objective.textContent = text;
+    if (refs.guideObjective) {
+      refs.guideObjective.textContent = text;
+    }
   }
 
   function setTimeSlot(slot) {
@@ -1294,6 +1299,9 @@
     refs.hudWeather.textContent = state.weather;
     refs.hudTime.textContent = state.timeSlot;
     refs.objective.textContent = state.objective;
+    if (refs.guideObjective) {
+      refs.guideObjective.textContent = state.objective;
+    }
   }
 
   function syncInventory() {
@@ -1934,6 +1942,10 @@
     if (state.lastHint !== nextHint) {
       state.lastHint = nextHint;
       refs.hint.textContent = nextHint;
+    }
+
+    if (refs.guideNextStep) {
+      refs.guideNextStep.textContent = target ? `离你最近：${nextHint}` : nextHint;
     }
   }
 
