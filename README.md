@@ -20,6 +20,13 @@
 - GitHub Pages：<https://sunjianspss.github.io/Misty-Bells-Town/>
 - 当前仓库已经接入 GitHub Pages 工作流；后续继续向 `main` 分支推送就会自动更新线上版本
 
+## 版本发布
+
+- 当前仓库版本号由根目录 `VERSION` 管理，当前基线为 `0.3.0`
+- 更新记录集中写在 [`CHANGELOG.md`](CHANGELOG.md)
+- 推送 `main` 会更新在线试玩；推送 `vX.Y.Z` 标签会自动生成 GitHub Release
+- 具体发布步骤见 [`docs/releasing.md`](docs/releasing.md)
+
 ## 七天记录
 
 1. 第一天：初到雾铃小镇，先认识阿栀，再帮林麦把第一篮点心送去广场，傍晚第一次去桥边听风。
@@ -84,6 +91,7 @@ python3 -m http.server 8000
 
 - 站点通过 GitHub Pages 发布
 - 发布工作流位于 `.github/workflows/deploy-pages.yml`
+- 版本发布工作流位于 `.github/workflows/release.yml`
 - 当前只发布站点所需的静态文件：`index.html`、`styles.css`、`script.js` 和 `assets/`
 
 ## 后续适合继续做
