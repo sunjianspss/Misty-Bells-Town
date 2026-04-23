@@ -145,6 +145,9 @@ body {
 }
 
 .poster-card {
+  display: grid;
+  gap: 16px;
+  align-content: start;
   padding: 18px;
   background:
     radial-gradient(circle at top left, rgba(255, 253, 247, 0.86), transparent 34%),
@@ -171,41 +174,70 @@ body {
   filter: saturate(1.02) contrast(1.02);
 }
 
-.cover-image-overlay,
-.cover-title-mark {
-  position: absolute;
-}
-
 .cover-image-overlay {
+  position: absolute;
   inset: 0;
+  pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(35, 24, 16, 0.42), rgba(35, 24, 16, 0.12) 34%, rgba(35, 24, 16, 0.02) 72%);
+    linear-gradient(180deg, rgba(35, 24, 16, 0.2), rgba(35, 24, 16, 0.06) 34%, rgba(35, 24, 16, 0.02) 72%);
 }
 
-.cover-title-mark {
-  top: 22px;
-  left: 22px;
+.poster-title-band {
+  position: relative;
+  isolation: isolate;
   display: grid;
-  gap: 4px;
-  max-width: min(52%, 320px);
-  padding: 12px 16px 13px;
-  border-radius: 18px;
-  background: rgba(66, 47, 33, 0.58);
+  gap: 2px;
+  width: fit-content;
+  max-width: min(72%, 240px);
+  margin: -6px 0 0 18px;
+  padding: 7px 11px 8px;
+  border: 1px solid rgba(249, 229, 197, 0.22);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(132, 95, 68, 0.97), rgba(89, 62, 45, 0.98)),
+    linear-gradient(90deg, rgba(245, 214, 160, 0.08), rgba(245, 214, 160, 0));
   color: #fff7e8;
-  backdrop-filter: blur(4px);
+  box-shadow:
+    0 10px 20px rgba(43, 30, 19, 0.1),
+    inset 0 1px 0 rgba(255, 251, 240, 0.14),
+    inset 0 0 0 1px rgba(73, 50, 35, 0.24);
 }
 
-.cover-title-mark strong {
+.poster-title-band::before,
+.poster-title-band::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 35% 35%, rgba(255, 244, 216, 0.95), rgba(235, 193, 121, 0.9) 48%, rgba(113, 77, 48, 0.95) 100%);
+  box-shadow: 0 0 0 1px rgba(72, 49, 33, 0.3);
+  z-index: 1;
+}
+
+.poster-title-band::before {
+  left: 8px;
+}
+
+.poster-title-band::after {
+  right: 8px;
+}
+
+.poster-title-band strong {
   font-family: Georgia, "Palatino Linotype", serif;
-  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-size: clamp(0.78rem, 1.45vw, 0.98rem);
   line-height: 1;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 0 rgba(57, 39, 26, 0.32);
 }
 
-.cover-title-mark span {
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
+.poster-title-band span {
+  font-size: 0.54rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(255, 247, 232, 0.82);
+  color: rgba(255, 244, 223, 0.78);
 }
 
 .game-shell {
@@ -1361,14 +1393,14 @@ code {
     gap: 8px;
   }
 
-  .cover-title-mark {
-    left: 14px;
-    right: 14px;
-    top: 14px;
+  .poster-title-band {
+    margin-left: 0;
+    margin-top: -2px;
+    max-width: 100%;
   }
 
-  .cover-title-mark span {
-    font-size: 0.7rem;
+  .poster-title-band span {
+    font-size: 0.5rem;
   }
 
   .fact-grid,
