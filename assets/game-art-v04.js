@@ -19,6 +19,12 @@
       rows: { down: 0, left: 1, right: 2, up: 3 },
       columns: { linmai: 0, shenyan: 1, xuhuai: 2, qin: 3 },
     },
+    terrainBase: {
+      src: "assets/images/game/v0.4/tiles/tile_terrain_base_4x4_v01.png",
+      cellWidth: 32,
+      cellHeight: 32,
+      rows: { grass: 0, path: 1, plaza: 2, water: 3 },
+    },
     bridgeFx: {
       src: "assets/images/game/v0.4/props/prop_bridge_fx_4x4_v01.png",
       cellWidth: 32,

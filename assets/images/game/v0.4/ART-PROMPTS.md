@@ -109,3 +109,35 @@ background; no grid, text, shadows, props, UI or watermark.
 
 - `characters/chr_villagers_idle_4dir_v01.png`
 - `reference/bridge-dusk-stage1b-playable.png`
+
+## 阶段 2A 地形材质图集
+
+输入参考：
+
+- `backgrounds/scene_bridge_dusk_bg_576x448_v01.png`：现有样片的材质、配色与像素密度。
+- `reference/bridge-dusk-direction.png`：整体完成度方向。
+
+最终生成约束：
+
+```text
+Create exactly one square 4-column × 4-row terrain material atlas with sixteen
+equal square cells. Row 1: four seamless spring-grass variants without flowers.
+Row 2: four warm ochre dirt-path variants. Row 3: four old mauve-gray stone
+plaza variants. Row 4: four blue-green river variants with sparse horizontal
+ripples. Use polished original top-down pixel art designed to reduce to 32 × 32
+pixels per cell, neutral spring daylight, consistent texture scale and crisp
+1–3 pixel clusters. Cells are edge-to-edge with no margin, gutter, grid, label,
+border or perspective. No shoreline, props, characters, buildings, bridge, UI,
+text, logo, watermark, painterly blur, antialiasing or baked dusk lighting.
+```
+
+使用 OpenAI 内置图像生成工具得到的源图保存为
+`source/terrain-materials-atlas-source-v01.png`。随后由
+`scripts/prepare_stage2a_terrain.py` 按比例完整分格、缩放、统一同材质的色值与对比度，
+并为每行四个变体建立共享的 4 像素环绕边缘后输出：
+
+- `tiles/tile_terrain_base_4x4_v01.png`
+
+运行时图集为 `128 × 128`，单元 `32 × 32`；第 0–3 行依次为草地、泥路、石广场和水面，
+每行四个确定性变体。任意同材质变体横向或纵向相邻时外沿像素一致；素材加载失败时，
+正式七天流程继续回退原程序绘制。

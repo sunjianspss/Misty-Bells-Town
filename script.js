@@ -4391,22 +4391,68 @@
     ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
   }
 
+  function terrainVariant(x, y) {
+    let hash = Math.imul(x + 1, 0x9e3779b1) ^ Math.imul(y + 1, 0x85ebca77);
+    hash ^= hash >>> 16;
+    hash = Math.imul(hash, 0x7feb352d);
+    hash ^= hash >>> 15;
+    return hash & 3;
+  }
+
+  function drawTerrainBaseTile(material, x, y) {
+    if (!artV04) {
+      return false;
+    }
+
+    const spec = artV04.specs.terrainBase;
+    const row = spec && spec.rows ? spec.rows[material] : undefined;
+    if (!Number.isInteger(row)) {
+      return false;
+    }
+
+    return drawArtCell(
+      "terrainBase",
+      row,
+      terrainVariant(x, y),
+      x * TILE,
+      y * TILE,
+      TILE,
+      TILE,
+    );
+  }
+
   function drawWaterTile(x, y, now) {
     const px = x * TILE;
     const py = y * TILE;
     const dusk = state.timeSlot === "傍晚" || state.timeSlot === "夜晚";
     const frame = animationFrame(now, 260, 4, x * 0.25 + y * 0.5);
-    drawTile(x, y, dusk ? "#355d70" : "#4f8194");
-
-    ctx.fillStyle = dusk ? "#294c60" : "#3e6d82";
-    ctx.fillRect(px, py + 12.5, TILE, 3.5);
-    ctx.fillStyle = dusk ? "#5e8796" : "#73a1aa";
-    ctx.fillRect(px + 1 + frame * 0.5, py + 3, 6, 0.5);
-    ctx.fillRect(px + 8 - frame * 0.5, py + 8.5, 6.5, 0.5);
-    ctx.fillRect(px + 3.5, py + 13.5, 4 + (frame % 2), 0.5);
-    ctx.fillStyle = dusk ? "#7895a0" : "#91b6b5";
-    ctx.fillRect(px + 10.5, py + 4.5 + (frame % 2), 3, 0.5);
-    ctx.fillRect(px + 2, py + 10.5 - (frame % 2) * 0.5, 2.5, 0.5);
+    const drewTerrainArt = drawTerrainBaseTile("water", x, y);
+    if (drewTerrainArt) {
+      if (dusk) {
+        ctx.fillStyle = "rgba(24, 42, 62, 0.28)";
+        ctx.fillRect(px, py, TILE, TILE);
+      }
+      ctx.fillStyle = dusk
+        ? "rgba(125, 167, 183, 0.5)"
+        : "rgba(145, 191, 196, 0.54)";
+      ctx.fillRect(px + 1 + frame * 0.5, py + 3, 6, 0.5);
+      ctx.fillRect(px + 8 - frame * 0.5, py + 8.5, 6.5, 0.5);
+      ctx.fillStyle = dusk
+        ? "rgba(94, 135, 150, 0.46)"
+        : "rgba(112, 166, 175, 0.5)";
+      ctx.fillRect(px + 3.5, py + 13.5, 4 + (frame % 2), 0.5);
+    } else {
+      drawTile(x, y, dusk ? "#355d70" : "#4f8194");
+      ctx.fillStyle = dusk ? "#294c60" : "#3e6d82";
+      ctx.fillRect(px, py + 12.5, TILE, 3.5);
+      ctx.fillStyle = dusk ? "#5e8796" : "#73a1aa";
+      ctx.fillRect(px + 1 + frame * 0.5, py + 3, 6, 0.5);
+      ctx.fillRect(px + 8 - frame * 0.5, py + 8.5, 6.5, 0.5);
+      ctx.fillRect(px + 3.5, py + 13.5, 4 + (frame % 2), 0.5);
+      ctx.fillStyle = dusk ? "#7895a0" : "#91b6b5";
+      ctx.fillRect(px + 10.5, py + 4.5 + (frame % 2), 3, 0.5);
+      ctx.fillRect(px + 2, py + 10.5 - (frame % 2) * 0.5, 2.5, 0.5);
+    }
 
     if (x === 12 && !world.bridge.has(tileKey(x, y))) {
       ctx.fillStyle = "#536a45";
@@ -4485,38 +4531,44 @@
         }
 
         if (world.square.has(key)) {
-          drawTile(x, y, "#b9a58e");
-          ctx.fillStyle = "#8e7a68";
-          ctx.fillRect(x * TILE, y * TILE, TILE, 0.5);
-          ctx.fillRect(x * TILE, y * TILE, 0.5, TILE);
-          ctx.fillRect(x * TILE + 8, y * TILE + 8, 0.5, 8);
-          ctx.fillStyle = "#d0c0a7";
-          ctx.fillRect(x * TILE + 2, y * TILE + 3, 4, 0.5);
-          ctx.fillRect(x * TILE + 10, y * TILE + 11.5, 3.5, 0.5);
+          if (!drawTerrainBaseTile("plaza", x, y)) {
+            drawTile(x, y, "#b9a58e");
+            ctx.fillStyle = "#8e7a68";
+            ctx.fillRect(x * TILE, y * TILE, TILE, 0.5);
+            ctx.fillRect(x * TILE, y * TILE, 0.5, TILE);
+            ctx.fillRect(x * TILE + 8, y * TILE + 8, 0.5, 8);
+            ctx.fillStyle = "#d0c0a7";
+            ctx.fillRect(x * TILE + 2, y * TILE + 3, 4, 0.5);
+            ctx.fillRect(x * TILE + 10, y * TILE + 11.5, 3.5, 0.5);
+          }
           continue;
         }
 
         if (world.path.has(key)) {
-          drawTile(x, y, "#a77a51");
-          ctx.fillStyle = "#895f42";
-          ctx.fillRect(x * TILE, y * TILE + 13.5, TILE, 2.5);
-          ctx.fillStyle = "#c69a63";
-          ctx.fillRect(x * TILE + 2.5, y * TILE + 3.5, 2, 1);
-          ctx.fillRect(x * TILE + 10.5, y * TILE + 8, 2.5, 1);
-          ctx.fillStyle = "#79543b";
-          ctx.fillRect(x * TILE + 6, y * TILE + 11.5, 1, 0.5);
+          if (!drawTerrainBaseTile("path", x, y)) {
+            drawTile(x, y, "#a77a51");
+            ctx.fillStyle = "#895f42";
+            ctx.fillRect(x * TILE, y * TILE + 13.5, TILE, 2.5);
+            ctx.fillStyle = "#c69a63";
+            ctx.fillRect(x * TILE + 2.5, y * TILE + 3.5, 2, 1);
+            ctx.fillRect(x * TILE + 10.5, y * TILE + 8, 2.5, 1);
+            ctx.fillStyle = "#79543b";
+            ctx.fillRect(x * TILE + 6, y * TILE + 11.5, 1, 0.5);
+          }
           continue;
         }
 
-        const palette = paletteForTerrain(x, y);
-        drawTile(x, y, palette.base);
-        ctx.fillStyle = palette.dark;
-        ctx.fillRect(x * TILE + 3, y * TILE + 4, 1.5, 2.5);
-        ctx.fillRect(x * TILE + 11, y * TILE + 9, 1.5, 1.5);
-        ctx.fillRect(x * TILE + 6.5, y * TILE + 13, 0.5, 1.5);
-        ctx.fillStyle = palette.light;
-        ctx.fillRect(x * TILE + 9, y * TILE + 3, 1.5, 1);
-        ctx.fillRect(x * TILE + 1.5, y * TILE + 11, 1, 0.5);
+        if (!drawTerrainBaseTile("grass", x, y)) {
+          const palette = paletteForTerrain(x, y);
+          drawTile(x, y, palette.base);
+          ctx.fillStyle = palette.dark;
+          ctx.fillRect(x * TILE + 3, y * TILE + 4, 1.5, 2.5);
+          ctx.fillRect(x * TILE + 11, y * TILE + 9, 1.5, 1.5);
+          ctx.fillRect(x * TILE + 6.5, y * TILE + 13, 0.5, 1.5);
+          ctx.fillStyle = palette.light;
+          ctx.fillRect(x * TILE + 9, y * TILE + 3, 1.5, 1);
+          ctx.fillRect(x * TILE + 1.5, y * TILE + 11, 1, 0.5);
+        }
       }
     }
 
