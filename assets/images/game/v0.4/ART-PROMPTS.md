@@ -1,4 +1,4 @@
-# v0.4 阶段 0–2B 素材生成记录
+# v0.4 阶段 0–2C 素材生成记录
 
 生成方式：Codex 内置 `image_gen`。以下均为原创方向稿，不使用封面裁切。
 
@@ -224,3 +224,158 @@ uv run --python 3.12 python scripts/prepare_stage2b_assets.py \
 
 四张图集均只含 `0 / 255` Alpha，运行时可见像素没有精确或近似品红。相同源图和脚本重复
 运行会得到字节一致的 PNG。新素材加载失败时，正式流程继续执行原程序绘制。
+
+## 阶段 2C 静态核心美术收尾
+
+生成方式仍为 Codex 内置 `image_gen`，使用全新生成模式；没有使用封面裁切、外部素材或
+图片编辑模式。四张生成源图均以 `#FF00FF` 为目标的品红色键底生成；处理器会采样边缘
+色差并确定性清除，而不假定生成图每个背景像素完全同色。
+
+### 分层春树
+
+```text
+Create one original isolated pixel-art spring tree asset for a cozy top-down
+3/4-view East Asian riverside village game. This is a production game sprite
+source, not an illustration. Show exactly ONE mature asymmetrical village
+tree: a sturdy dark warm-brown trunk with visible roots, layered mossy
+sage-green foliage, small muted dusty-pink spring blossoms, sparse warm-gold
+leaf highlights, and deep cool green-violet shadow clusters. The silhouette
+must be organic and clearly non-rectangular, broad enough to visually cover a
+2x2 tile collision footprint, with the trunk centered near the bottom and a
+few canopy branches extending toward the upper-right. Match this palette:
+dark wood #56372D, warm wood #95603E, grass shadow #536A45, moss/sage
+#78925E, blossom pink #D795A0, cream #E9E2CE, restrained gold #F0BF6D.
+Crisp handcrafted pixel art, hard 1–2 pixel edge clusters, no antialias blur,
+no gradients, no pure black outline, readable at tiny game scale. Center the
+entire tree with generous empty space on every side. Use a perfectly uniform
+flat #FF00FF background all the way to every image edge for chroma keying.
+Absolutely no ground tile, grass patch, water, cast shadow, frame, grid,
+label, text, UI, characters, buildings, extra objects, logo, or watermark.
+```
+
+### 花簇与芦苇
+
+```text
+Create one exact 4-column by 2-row production sprite source sheet of original
+small pixel-art vegetation for a cozy top-down 3/4-view East Asian riverside
+village game. The sheet must contain exactly EIGHT isolated centered sprites
+with large clean gaps; four equally spaced columns and two equally spaced
+rows, no cell borders and no grid lines. Top row, left to right: (1) compact
+warm honey-gold wildflower cluster with leaves, (2) compact dusty-pink spring
+flower cluster with leaves, (3) compact pale cream/light-gold flower cluster
+with leaves, (4) mixed tiny pink-gold-cream flower cluster. Bottom row, left
+to right: (1) short three-stem river reed clump, (2) taller five-stem reed
+clump with subtle seed heads, (3) left-leaning reed clump, (4) right-leaning
+reed clump with a few narrow leaves. Every sprite is a freestanding
+transparent-ready prop with no grass or water tile beneath it. Match palette:
+grass shadow #536A45, moss #78925E, reed #6B8E59, gold #F4C467 and #F0BF6D,
+dusty pink #D795A0, cream #E9E2CE. Crisp handcrafted pixel art, hard 1–2
+pixel clusters, no antialias blur, no gradients, no pure black outlines,
+readable at 16x16 logical-pixel game scale. Use a perfectly uniform flat
+#FF00FF background across the entire image and to every edge for chroma
+keying. Absolutely no ground, water, shadows, pots, baskets, characters,
+labels, text, numbers, UI, borders, grid, logo, or watermark.
+```
+
+### 节庆静态附件
+
+```text
+Create one exact 4-column by 2-row production sprite source sheet of original
+small pixel-art festival props for a cozy top-down 3/4-view East Asian
+riverside village game. The sheet must contain exactly EIGHT isolated
+centered sprites with large clean gaps; four equally spaced columns and two
+equally spaced rows, no cell borders and no grid lines. Every cell is a
+distinct freestanding prop on the same scale.
+Top row, left to right: (1) a plain low wooden village display rack, (2) the
+same low rack carrying three neatly rolled fabrics in dusty coral, sage green,
+and warm apricot gold, (3) a low offering rack with two small woven baskets
+and cream parcels, (4) a slender dark-warm timber bridge lamp post with a
+short horizontal hook and an EMPTY hanging gap—no lantern body and no flame,
+because an animated lantern sprite will overlay it.
+Bottom row, left to right: (1) an airy two-post bridge festival scaffold with
+one thin upper cord and three empty hanging points, (2) the same scaffold with
+small coral/cream/sage static knots for tied ribbons but no long moving cloth,
+(3) the same scaffold with exactly three small cream rectangular lamp-test
+tags hanging from the upper cord, (4) the same scaffold with an extra upper
+wish cord and several short coral/sage/gold wish tags. Do not include wind
+chimes, lantern flames, long waving ribbons, particles, or glow; those remain
+separate animated layers.
+Match palette: dark wood #56372D, warm wood #95603E, grass shadow #536A45,
+sage #7AA091, gold #F0BF6D, dusty coral #DE9471, dusty pink #D795A0, cloth
+blue #7AA8C3, cream #E9E2CE and #F0E3C7. Crisp handcrafted pixel art,
+top-down three-quarter view, hard 1–2 pixel clusters, no antialias blur, no
+gradients, no pure black outlines, readable at tiny game scale. Use a
+perfectly uniform flat #FF00FF background across the entire image and to every
+edge for chroma keying. Absolutely no ground, water, bridge deck, cast
+shadows, people, buildings, labels, readable text, numbers, UI, borders,
+grid, logo, or watermark.
+```
+
+### 春 7 匿名集会人群
+
+```text
+Create one exact 5-column by 1-row production sprite source sheet of original
+anonymous festival crowd characters for a cozy top-down 3/4-view East Asian
+riverside village pixel game. Show exactly FIVE isolated full-body villagers,
+equally spaced left-to-right, all in a neutral standing down-facing pose with
+their feet aligned on one common baseline. They are existing unnamed festival
+bystanders, not story characters. Keep every person centered in an
+equal-width cell with large clean gaps and no overlap, no cell borders and no
+grid lines.
+Left to right: (1) a short young villager with a round sage cap, cream shirt
+and muted coral vest; (2) a slim adult with dark tied hair, indigo-blue jacket
+and apricot sash; (3) a broad older adult with a small straw cap, warm brown
+vest and cream sleeves; (4) a petite elder with a pale head scarf, dusty pink
+outer robe and sage apron; (5) a tall adult with dark bobbed hair, muted teal
+tunic and warm-gold scarf. Make all five immediately distinguishable by hat
+or hair silhouette, body proportion, and clothing shape, while preserving a
+cohesive village palette. No one holds a weapon; optional tiny static basket
+or folded fan is acceptable but must stay inside that character cell.
+Match the existing game character scale and palette: dark outline-brown
+#56372D, warm brown #95603E, sage #7AA091, indigo/cloth blue #5E7894 and
+#7AA8C3, dusty coral #DE9471, dusty pink #D795A0, cream #E9E2CE, gold
+#F0BF6D. Crisp handcrafted pixel art with expressive tiny faces, hard 1–2
+pixel clusters, no antialias blur, no gradients, no pure black outlines. Use
+a perfectly uniform flat #FF00FF background across the whole image and to
+every edge for chroma keying. Absolutely no ground, shadows, scenery, props
+between characters, labels, text, numbers, UI, borders, grid, logo, or
+watermark.
+```
+
+源图与运行时文件：
+
+- `source/tree-keyed-v01.png` →
+  `props/prop_tree_layers_1x2_v01.png`（`96 × 192`，单元 `96 × 96`）。
+- `source/flora-static-keyed-v01.png` →
+  `tiles/tile_flora_static_4x2_v01.png`（`128 × 64`，单元 `32 × 32`）。
+- `source/festival-accents-keyed-v01.png` →
+  `props/prop_festival_accents_4x2_v01.png`（`256 × 128`，单元 `64 × 64`）。
+- `source/festival-crowd-keyed-v01.png` →
+  `characters/chr_festival_crowd_idle_5x1_v01.png`（`200 × 48`，单元 `40 × 48`）。
+- `source/villagers-idle-transparent-v01.png` →
+  `characters/chr_villagers_idle_4dir_v02.png`（`160 × 192`）。
+- `source/azhi-walk-keyed.png` →
+  `characters/chr_azhi_walk_4dir_4f_v02.png`（`160 × 192`）。
+
+最后两张 `v02` 沿用已经生成并入库的原创人物源图，只做内容分带、统一比例、脚点修正、
+硬 Alpha 与无抖动减色，没有重新生成角色设计。六张运行时图集可由仓库脚本复现：
+
+```bash
+uv run --python 3.12 python scripts/prepare_stage2c_assets.py \
+  --tree assets/images/game/v0.4/source/tree-keyed-v01.png \
+  --flora assets/images/game/v0.4/source/flora-static-keyed-v01.png \
+  --festival-accents assets/images/game/v0.4/source/festival-accents-keyed-v01.png \
+  --festival-crowd assets/images/game/v0.4/source/festival-crowd-keyed-v01.png \
+  --villagers assets/images/game/v0.4/source/villagers-idle-transparent-v01.png \
+  --azhi assets/images/game/v0.4/source/azhi-walk-keyed.png \
+  --tree-output assets/images/game/v0.4/props/prop_tree_layers_1x2_v01.png \
+  --flora-output assets/images/game/v0.4/tiles/tile_flora_static_4x2_v01.png \
+  --festival-output assets/images/game/v0.4/props/prop_festival_accents_4x2_v01.png \
+  --crowd-output assets/images/game/v0.4/characters/chr_festival_crowd_idle_5x1_v01.png \
+  --villagers-output assets/images/game/v0.4/characters/chr_villagers_idle_4dir_v02.png \
+  --azhi-output assets/images/game/v0.4/characters/chr_azhi_walk_4dir_4f_v02.png
+```
+
+处理脚本执行确定性色键、去品红 / 绿幕、可见 Alpha 裁切、内容分带、脚点对齐、硬 Alpha、
+无抖动减色与树冠前景层生成。相同源图重复运行得到字节一致的 PNG；任一运行时素材失败时
+只回退对应旧绘制。

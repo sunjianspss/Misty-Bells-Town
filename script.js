@@ -4670,6 +4670,20 @@
   }
 
   function drawTree(x, y, now) {
+    if (
+      drawArtCell(
+        "treeLayers",
+        0,
+        0,
+        x * TILE - 8,
+        y * TILE - 16,
+        48,
+        48,
+      )
+    ) {
+      return;
+    }
+
     const px = x * TILE;
     const py = y * TILE;
     ctx.fillStyle = "#6c513a";
@@ -4681,6 +4695,18 @@
     ctx.fillStyle = "#74a25f";
     ctx.fillRect(px + 4 + sway, py + 4, 12, 4);
     ctx.fillRect(px + 6, py + 10, 10, 4);
+  }
+
+  function drawTreeForeground(x, y) {
+    drawArtCell(
+      "treeLayers",
+      1,
+      0,
+      x * TILE - 8,
+      y * TILE - 16,
+      48,
+      48,
+    );
   }
 
   function drawBakery(now) {
@@ -4941,9 +4967,21 @@
   }
 
   function drawFlowers() {
-    world.flowers.forEach((flower) => {
+    world.flowers.forEach((flower, index) => {
       const px = flower.x * TILE;
       const py = flower.y * TILE;
+      const flowerColumns = {
+        "#f0bf6d": 0,
+        "#d795a0": 1,
+        "#f4d789": 2,
+      };
+      const column =
+        index === 5 || index === 9
+          ? 3
+          : (flowerColumns[flower.color.toLowerCase()] ?? 3);
+      if (drawArtCell("flora", 0, column, px, py, TILE, TILE)) {
+        return;
+      }
       ctx.fillStyle = "#60874e";
       ctx.fillRect(px + 7, py + 9, 2, 5);
       ctx.fillStyle = flower.color;
@@ -4954,9 +4992,23 @@
   }
 
   function drawReeds() {
-    world.reeds.forEach((reed) => {
+    const reedColumns = [0, 1, 3];
+    world.reeds.forEach((reed, index) => {
       const px = reed.x * TILE;
       const py = reed.y * TILE;
+      if (
+        drawArtCell(
+          "flora",
+          1,
+          reedColumns[index % reedColumns.length],
+          px,
+          py,
+          TILE,
+          TILE,
+        )
+      ) {
+        return;
+      }
       ctx.fillStyle = "#6b8e59";
       ctx.fillRect(px + 5, py + 6, 1, 7);
       ctx.fillRect(px + 8, py + 4, 1, 9);
@@ -5009,9 +5061,21 @@
       const py = lamp.y * TILE;
       const lit = state.timeSlot === "傍晚" || state.timeSlot === "夜晚";
       const frame = lit ? 2 + animationFrame(now, 210, 2, index * 0.5) : 0;
-      ctx.fillStyle = "#56372d";
-      ctx.fillRect(px + 7, py + 5, 2, 11);
-      ctx.fillRect(px + 7, py + 5, 6, 1);
+      if (
+        !drawArtCell(
+          "festivalAccents",
+          0,
+          3,
+          px - 8,
+          py - 16,
+          32,
+          32,
+        )
+      ) {
+        ctx.fillStyle = "#56372d";
+        ctx.fillRect(px + 7, py + 5, 2, 11);
+        ctx.fillRect(px + 7, py + 5, 6, 1);
+      }
       if (!drawArtCell("bridgeFx", 2, frame, px + 2, py - 3, 12, 12)) {
         ctx.fillStyle = lit ? "#f4c467" : "#786553";
         ctx.fillRect(px + 6, py + 2, 4, 4);
@@ -5028,22 +5092,45 @@
     const py = 9 * TILE;
     const swaySteps = [-1, 0, 1, 0];
     const sway = swaySteps[animationFrame(now, 190, 4)];
-    ctx.fillStyle = "#7a5b41";
-    ctx.fillRect(px + 4, py - 10, 1.5, 12);
-    ctx.fillRect(px + 18, py - 10, 1.5, 12);
-    ctx.strokeStyle = "#8f6c53";
-    ctx.lineWidth = 0.5;
-    ctx.beginPath();
-    ctx.moveTo(px + 4.5, py - 9);
-    ctx.lineTo(px + 18.5, py - 9);
-    ctx.stroke();
+    const allFestivalWishesDone =
+      state.currentDayIndex >= 7 &&
+      state.festivalWishLeftDoneDay7 &&
+      state.festivalWishCenterDoneDay7 &&
+      state.festivalWishRightDoneDay7;
+    const scaffoldColumn = allFestivalWishesDone
+      ? 3
+      : state.currentDayIndex >= 6 && state.lanternTaskReturnedDay6
+        ? 2
+        : state.currentDayIndex >= 5 && state.ribbonTaskReturnedDay5
+          ? 1
+          : 0;
+    const drewFestivalScaffold = drawArtCell(
+      "festivalAccents",
+      1,
+      scaffoldColumn,
+      px - 8,
+      py - 24,
+      32,
+      32,
+    );
+    if (!drewFestivalScaffold) {
+      ctx.fillStyle = "#7a5b41";
+      ctx.fillRect(px + 4, py - 10, 1.5, 12);
+      ctx.fillRect(px + 18, py - 10, 1.5, 12);
+      ctx.strokeStyle = "#8f6c53";
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(px + 4.5, py - 9);
+      ctx.lineTo(px + 18.5, py - 9);
+      ctx.stroke();
 
-    ctx.fillStyle = "#d58f73";
-    ctx.fillRect(px + 7 + sway * 0.5, py - 8, 2, 4);
-    ctx.fillStyle = "#f0e3c7";
-    ctx.fillRect(px + 11 - sway * 0.5, py - 7, 2, 4);
-    ctx.fillStyle = "#7aa091";
-    ctx.fillRect(px + 15 + sway * 0.5, py - 8, 2, 4);
+      ctx.fillStyle = "#d58f73";
+      ctx.fillRect(px + 7 + sway * 0.5, py - 8, 2, 4);
+      ctx.fillStyle = "#f0e3c7";
+      ctx.fillRect(px + 11 - sway * 0.5, py - 7, 2, 4);
+      ctx.fillStyle = "#7aa091";
+      ctx.fillRect(px + 15 + sway * 0.5, py - 8, 2, 4);
+    }
 
     if (state.currentDayIndex >= 3) {
       const chimeFrame = animationFrame(now, 180, 4);
@@ -5142,7 +5229,10 @@
         }
       });
 
-      if (state.lanternTaskReturnedDay6) {
+      if (
+        state.lanternTaskReturnedDay6 &&
+        (!drewFestivalScaffold || scaffoldColumn < 2)
+      ) {
         ctx.fillStyle = "#f0e3c7";
         ctx.fillRect(px + 6, py - 14, 2, 3);
         ctx.fillRect(px + 10, py - 13, 2, 3);
@@ -5151,47 +5241,49 @@
     }
 
     if (state.currentDayIndex >= 7) {
-      ctx.strokeStyle = "#b88f73";
-      ctx.beginPath();
-      ctx.moveTo(px + 2, py - 13);
-      ctx.lineTo(px + 20, py - 13);
-      ctx.stroke();
+      if (!allFestivalWishesDone || !drewFestivalScaffold) {
+        ctx.strokeStyle = "#b88f73";
+        ctx.beginPath();
+        ctx.moveTo(px + 2, py - 13);
+        ctx.lineTo(px + 20, py - 13);
+        ctx.stroke();
 
-      const wishStates = [
-        {
-          active: state.festivalTagsReadyDay7,
-          done: state.festivalWishLeftDoneDay7,
-          x: 10 * TILE + 7,
-          y: 10 * TILE + 5,
-          color: "#d58f73",
-        },
-        {
-          active: state.festivalTagsReadyDay7,
-          done: state.festivalWishCenterDoneDay7,
-          x: 12 * TILE + 7,
-          y: 10 * TILE + 5,
-          color: "#f0e3c7",
-        },
-        {
-          active: state.festivalTagsReadyDay7,
-          done: state.festivalWishRightDoneDay7,
-          x: 14 * TILE + 7,
-          y: 10 * TILE + 5,
-          color: "#9ab7a0",
-        },
-      ];
+        const wishStates = [
+          {
+            active: state.festivalTagsReadyDay7,
+            done: state.festivalWishLeftDoneDay7,
+            x: 10 * TILE + 7,
+            y: 10 * TILE + 5,
+            color: "#d58f73",
+          },
+          {
+            active: state.festivalTagsReadyDay7,
+            done: state.festivalWishCenterDoneDay7,
+            x: 12 * TILE + 7,
+            y: 10 * TILE + 5,
+            color: "#f0e3c7",
+          },
+          {
+            active: state.festivalTagsReadyDay7,
+            done: state.festivalWishRightDoneDay7,
+            x: 14 * TILE + 7,
+            y: 10 * TILE + 5,
+            color: "#9ab7a0",
+          },
+        ];
 
-      wishStates.forEach((wish) => {
-        ctx.fillStyle = "#7a5b41";
-        ctx.fillRect(wish.x + 1, wish.y - 4, 1, 4);
-        if (!wish.active && !wish.done) {
-          return;
-        }
-        ctx.fillStyle = wish.done ? wish.color : "#e7dcc7";
-        ctx.fillRect(wish.x, wish.y, 3, 4);
-        ctx.fillStyle = "#a87a5a";
-        ctx.fillRect(wish.x + 1, wish.y - 1, 1, 1);
-      });
+        wishStates.forEach((wish) => {
+          ctx.fillStyle = "#7a5b41";
+          ctx.fillRect(wish.x + 1, wish.y - 4, 1, 4);
+          if (!wish.active && !wish.done) {
+            return;
+          }
+          ctx.fillStyle = wish.done ? wish.color : "#e7dcc7";
+          ctx.fillRect(wish.x, wish.y, 3, 4);
+          ctx.fillStyle = "#a87a5a";
+          ctx.fillRect(wish.x + 1, wish.y - 1, 1, 1);
+        });
+      }
 
       if (state.timeSlot === "傍晚") {
         ctx.fillStyle = "rgba(250, 217, 156, 0.08)";
@@ -5261,14 +5353,16 @@
     ctx.ellipse(12 * TILE + 10, 10 * TILE + 4, 42, 20, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = "#a77955";
-    ctx.fillRect(6 * TILE + 3, 7 * TILE + 12, 22, 3);
-    ctx.fillStyle = "#cf7c60";
-    ctx.fillRect(6 * TILE + 5, 7 * TILE + 11, 4, 2);
-    ctx.fillStyle = "#7aa091";
-    ctx.fillRect(6 * TILE + 11, 7 * TILE + 11, 4, 2);
-    ctx.fillStyle = "#d9ae66";
-    ctx.fillRect(6 * TILE + 17, 7 * TILE + 11, 4, 2);
+    if (!drawArtCell("festivalAccents", 0, 1, 6 * TILE, 7 * TILE, 32, 32)) {
+      ctx.fillStyle = "#a77955";
+      ctx.fillRect(6 * TILE + 3, 7 * TILE + 12, 22, 3);
+      ctx.fillStyle = "#cf7c60";
+      ctx.fillRect(6 * TILE + 5, 7 * TILE + 11, 4, 2);
+      ctx.fillStyle = "#7aa091";
+      ctx.fillRect(6 * TILE + 11, 7 * TILE + 11, 4, 2);
+      ctx.fillStyle = "#d9ae66";
+      ctx.fillRect(6 * TILE + 17, 7 * TILE + 11, 4, 2);
+    }
 
     const bits = [
       { speed: 72, offset: 12, baseY: 18, color: "#f0e3c7" },
@@ -5348,7 +5442,7 @@
     const px = target.x * TILE + 8;
     const py =
       target.y * TILE +
-      (target.id === "azhi" ? -10 : target.id && npcBase[target.id] ? 1 : 2);
+      (target.id && npcBase[target.id] ? -10 : 2);
     ctx.fillStyle = "rgba(76, 52, 36, 0.7)";
     ctx.fillRect(px - 1.5, py - 2.5 - pulse, 3, 5);
     ctx.fillStyle = "#fff1b2";
@@ -5396,6 +5490,7 @@
 
   function drawCharacterSprite(entity, now) {
     const isVillager = ["linmai", "shenyan", "xuhuai", "qin"].includes(entity.palette);
+    const isFestivalCrowd = /^crowd[1-5]$/.test(entity.palette || "");
     const key =
       entity.palette === "player"
         ? "player"
@@ -5403,7 +5498,9 @@
           ? "azhi"
           : isVillager
             ? "villagers"
-            : null;
+            : isFestivalCrowd
+              ? "festivalCrowd"
+              : null;
     if (!key || !artV04) {
       return false;
     }
@@ -5417,9 +5514,9 @@
     const drawX = entity.drawX !== undefined ? entity.drawX : entity.x;
     const drawY = entity.drawY !== undefined ? entity.drawY : entity.y;
     const facing = entity.facing || "down";
-    const row = spec.rows[facing] ?? spec.rows.down ?? 0;
+    const row = spec.rows ? (spec.rows[facing] ?? spec.rows.down ?? 0) : 0;
     const frame =
-      key === "villagers"
+      key === "villagers" || key === "festivalCrowd"
         ? spec.columns[entity.palette]
         : characterAnimationFrame(entity, now);
     const width = spec.cellWidth / RENDER_SCALE;
@@ -5618,6 +5715,27 @@
     }
   }
 
+  function fillPixelGlow(cx, cy, width, height, notch) {
+    const x = Math.round(cx - width / 2);
+    const y = Math.round(cy - height / 2);
+    const middleHeight = height - notch * 4;
+    ctx.fillRect(x + notch * 2, y, width - notch * 4, notch);
+    ctx.fillRect(x + notch, y + notch, width - notch * 2, notch);
+    ctx.fillRect(x, y + notch * 2, width, middleHeight);
+    ctx.fillRect(
+      x + notch,
+      y + height - notch * 2,
+      width - notch * 2,
+      notch,
+    );
+    ctx.fillRect(
+      x + notch * 2,
+      y + height - notch,
+      width - notch * 4,
+      notch,
+    );
+  }
+
   function drawLampLightPass(now) {
     const lanterns =
       state.currentDayIndex >= 6
@@ -5636,27 +5754,17 @@
       }
 
       const flicker = animationFrame(now, 190, 4, index * 0.5);
-      const pulse = flicker === 1 ? 0.5 : flicker === 3 ? -0.5 : 0;
+      const pulse = flicker === 1 ? 1 : 0;
       const cx = lantern.tileX * TILE + 8;
       const cy = lantern.tileY * TILE + 8;
       ctx.fillStyle = "rgba(244, 196, 103, 0.085)";
-      ctx.fillRect(
-        snapLogical(cx - 11 - pulse),
-        snapLogical(cy - 8 - pulse),
-        22 + pulse * 2,
-        16 + pulse * 2,
-      );
+      fillPixelGlow(cx, cy, 22 + pulse * 2, 16 + pulse * 2, 2);
       ctx.fillStyle = "rgba(244, 196, 103, 0.17)";
-      ctx.fillRect(
-        snapLogical(cx - 7 - pulse),
-        snapLogical(cy - 5 - pulse),
-        14 + pulse * 2,
-        10 + pulse * 2,
-      );
+      fillPixelGlow(cx, cy, 14 + pulse * 2, 10 + pulse * 2, 1);
       ctx.fillStyle = "rgba(255, 226, 148, 0.32)";
-      ctx.fillRect(cx - 3, cy - 2.5, 6, 5);
+      fillPixelGlow(cx, cy, 6, 6, 1);
       ctx.fillStyle = "rgba(255, 242, 194, 0.68)";
-      ctx.fillRect(cx - 1, cy - 1.5, 2, 3);
+      ctx.fillRect(cx - 1, cy - 2, 2, 4);
     });
     ctx.restore();
 
@@ -5853,6 +5961,7 @@
       drawBridgeDuskSceneImage(duskLayers.foreground);
       drawBridgeDuskAtmosphere(now);
     } else {
+      drawTreeForeground(0, 9);
       drawBakeryForeground();
       drawHerbShedForeground();
       drawBridgeFrontRail();

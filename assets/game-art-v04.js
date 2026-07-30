@@ -7,17 +7,23 @@
       rows: { up: 0, right: 1, left: 2, down: 3 },
     },
     azhi: {
-      src: "assets/images/game/v0.4/characters/chr_azhi_walk_4dir_4f_v01.png",
+      src: "assets/images/game/v0.4/characters/chr_azhi_walk_4dir_4f_v02.png",
       cellWidth: 40,
       cellHeight: 48,
       rows: { down: 0, left: 1, right: 2, up: 3 },
     },
     villagers: {
-      src: "assets/images/game/v0.4/characters/chr_villagers_idle_4dir_v01.png",
+      src: "assets/images/game/v0.4/characters/chr_villagers_idle_4dir_v02.png",
       cellWidth: 40,
       cellHeight: 48,
       rows: { down: 0, left: 1, right: 2, up: 3 },
       columns: { linmai: 0, shenyan: 1, xuhuai: 2, qin: 3 },
+    },
+    festivalCrowd: {
+      src: "assets/images/game/v0.4/characters/chr_festival_crowd_idle_5x1_v01.png",
+      cellWidth: 40,
+      cellHeight: 48,
+      columns: { crowd1: 0, crowd2: 1, crowd3: 2, crowd4: 3, crowd5: 4 },
     },
     terrainBase: {
       src: "assets/images/game/v0.4/tiles/tile_terrain_base_4x4_v01.png",
@@ -29,6 +35,18 @@
       src: "assets/images/game/v0.4/tiles/tile_riverbank_overlay_4x2_v01.png",
       cellWidth: 32,
       cellHeight: 32,
+    },
+    flora: {
+      src: "assets/images/game/v0.4/tiles/tile_flora_static_4x2_v01.png",
+      cellWidth: 32,
+      cellHeight: 32,
+      rows: { flowers: 0, reeds: 1 },
+    },
+    treeLayers: {
+      src: "assets/images/game/v0.4/props/prop_tree_layers_1x2_v01.png",
+      cellWidth: 96,
+      cellHeight: 96,
+      rows: { base: 0, foreground: 1 },
     },
     landmarkLayers: {
       src: "assets/images/game/v0.4/props/prop_landmarks_layers_2x2_v01.png",
@@ -60,6 +78,12 @@
         lantern: 2,
         reflection: 3,
       },
+    },
+    festivalAccents: {
+      src: "assets/images/game/v0.4/props/prop_festival_accents_4x2_v01.png",
+      cellWidth: 64,
+      cellHeight: 64,
+      rows: { plaza: 0, scaffold: 1 },
     },
     bridgeDuskBackground: {
       src: "assets/images/game/v0.4/backgrounds/scene_bridge_dusk_bg_576x448_v01.png",
