@@ -4421,6 +4421,50 @@
     );
   }
 
+  function drawRiverbankOverlay(x, y) {
+    if (y === 8) {
+      if (x === 12) {
+        return drawArtCell("riverbank", 1, 0, x * TILE, y * TILE, TILE, TILE);
+      }
+      if (x >= 13) {
+        return drawArtCell(
+          "riverbank",
+          0,
+          (x + y) % 2,
+          x * TILE,
+          y * TILE,
+          TILE,
+          TILE,
+        );
+      }
+    }
+
+    if (x !== 12 || y === 10) {
+      return false;
+    }
+
+    const cellsByRow = {
+      9: [0, 2],
+      11: [0, 3],
+      12: [1, 2],
+      13: [1, 3],
+    };
+    const cell = cellsByRow[y];
+    if (!cell) {
+      return false;
+    }
+
+    return drawArtCell(
+      "riverbank",
+      cell[0],
+      cell[1],
+      x * TILE,
+      y * TILE,
+      TILE,
+      TILE,
+    );
+  }
+
   function drawWaterTile(x, y, now) {
     const px = x * TILE;
     const py = y * TILE;
@@ -4454,7 +4498,8 @@
       ctx.fillRect(px + 2, py + 10.5 - (frame % 2) * 0.5, 2.5, 0.5);
     }
 
-    if (x === 12 && !world.bridge.has(tileKey(x, y))) {
+    const drewRiverbankArt = drawRiverbankOverlay(x, y);
+    if (!drewRiverbankArt && x === 12 && !world.bridge.has(tileKey(x, y))) {
       ctx.fillStyle = "#536a45";
       ctx.fillRect(px, py, 1.5, TILE);
       ctx.fillStyle = "#6f735f";
@@ -4490,6 +4535,10 @@
   }
 
   function drawBridgeDeck() {
+    if (drawArtCell("landmarkLayers", 1, 0, 160, 120, 96, 80)) {
+      return;
+    }
+
     const x = 11 * TILE;
     const y = 10 * TILE;
     const width = 4 * TILE;
@@ -4577,6 +4626,10 @@
   }
 
   function drawBridgeBackRail() {
+    if (artV04 && artV04.get("landmarkLayers")) {
+      return;
+    }
+
     const x = 11 * TILE - 2;
     const y = 10 * TILE - 4;
     const width = 4 * TILE + 4;
@@ -4595,6 +4648,10 @@
   }
 
   function drawBridgeFrontRail() {
+    if (drawArtCell("landmarkLayers", 1, 1, 160, 120, 96, 80)) {
+      return;
+    }
+
     const x = 11 * TILE - 2;
     const y = 11 * TILE - 1;
     const width = 4 * TILE + 4;
@@ -4627,6 +4684,14 @@
   }
 
   function drawBakery(now) {
+    if (drawArtCell("landmarkLayers", 0, 0, 0, 0, 96, 80)) {
+      const smoke = [-1, 0, 1, 0][animationFrame(now, 360, 4)];
+      ctx.fillStyle = "rgba(252, 248, 240, 0.66)";
+      ctx.fillRect(18 + smoke * 0.5, 15, 2.5, 2.5);
+      ctx.fillRect(20 - smoke * 0.5, 10, 2, 2);
+      return;
+    }
+
     const px = TILE;
     const py = 2 * TILE;
     ctx.fillStyle = "#7c5b42";
@@ -4661,8 +4726,17 @@
     }
   }
 
+  function drawBakeryForeground() {
+    drawArtCell("landmarkLayers", 0, 1, 0, 0, 96, 80);
+  }
+
   function drawHerbShed() {
     if (state.currentDayIndex < 4) {
+      return;
+    }
+
+    const herbColumn = state.seedFoundDay4 ? 1 : 0;
+    if (drawArtCell("herbShed", 0, herbColumn, 136, 8, 48, 40)) {
       return;
     }
 
@@ -4691,7 +4765,28 @@
     }
   }
 
+  function drawHerbShedForeground() {
+    if (state.currentDayIndex < 4) {
+      return;
+    }
+    const herbColumn = state.seedFoundDay4 ? 1 : 0;
+    drawArtCell("herbShed", 1, herbColumn, 136, 8, 48, 40);
+  }
+
   function drawNoticeBoard() {
+    const noticeColumn =
+      state.currentDayIndex >= 7
+        ? 3
+        : state.currentDayIndex >= 3 ||
+            (state.currentDayIndex === 2 && state.noticeReadDay2)
+          ? 2
+          : state.currentDayIndex >= 2
+            ? 1
+            : 0;
+    if (drawArtCell("storyProps", 0, noticeColumn, 120, 52, 32, 32)) {
+      return;
+    }
+
     const px = 8 * TILE;
     const py = 4 * TILE;
     ctx.fillStyle = "#6c513a";
@@ -4740,6 +4835,26 @@
   }
 
   function drawTable() {
+    let tableRow = 1;
+    let tableColumn = 0;
+    if (state.currentDayIndex === 1 && state.breadDelivered) {
+      tableColumn = 1;
+    } else if (state.currentDayIndex === 2 && state.breadDay2Delivered) {
+      tableColumn = 2;
+    } else if (state.currentDayIndex === 5) {
+      tableColumn = 3;
+    } else if (state.currentDayIndex === 6) {
+      tableRow = 2;
+      tableColumn = 0;
+    } else if (state.currentDayIndex === 7) {
+      tableRow = 2;
+      tableColumn = 1;
+    }
+
+    if (drawArtCell("storyProps", tableRow, tableColumn, 136, 96, 32, 32)) {
+      return;
+    }
+
     const px = 9 * TILE;
     const py = 7 * TILE;
     const tableFilled =
@@ -4812,6 +4927,11 @@
   }
 
   function drawGate() {
+    const gateColumn = state.currentDayIndex >= 7 ? 3 : 2;
+    if (drawArtCell("storyProps", 2, gateColumn, 8, 176, 32, 32)) {
+      return;
+    }
+
     const px = TILE;
     const py = 12 * TILE;
     ctx.fillStyle = "#6b523b";
@@ -5733,6 +5853,8 @@
       drawBridgeDuskSceneImage(duskLayers.foreground);
       drawBridgeDuskAtmosphere(now);
     } else {
+      drawBakeryForeground();
+      drawHerbShedForeground();
       drawBridgeFrontRail();
       drawMist(now);
       drawRain(now);

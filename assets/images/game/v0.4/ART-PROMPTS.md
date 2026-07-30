@@ -1,4 +1,4 @@
-# v0.4 阶段 0–1B 素材生成记录
+# v0.4 阶段 0–2B 素材生成记录
 
 生成方式：Codex 内置 `image_gen`。以下均为原创方向稿，不使用封面裁切。
 
@@ -141,3 +141,86 @@ text, logo, watermark, painterly blur, antialiasing or baked dusk lighting.
 运行时图集为 `128 × 128`，单元 `32 × 32`；第 0–3 行依次为草地、泥路、石广场和水面，
 每行四个确定性变体。任意同材质变体横向或纵向相邻时外沿像素一致；素材加载失败时，
 正式七天流程继续回退原程序绘制。
+
+## 阶段 2B 地标、剧情道具与河岸
+
+输入参考：
+
+- `backgrounds/scene_bridge_dusk_bg_576x448_v01.png`：建筑、桥梁与水岸的材质密度。
+- `reference/bridge-dusk-direction.png`：靛蓝屋瓦、暖木、苔绿与黄铜高光的综合色调。
+- 阶段 2A 正式流程截图：只用于锁定原 `18 × 14` 空间、固体格和互动脚点。
+
+四张源图均由 OpenAI 内置图像生成工具生成在完全平坦的 `#FF00FF` 背景上；没有从封面或
+方向图裁切素材：
+
+- `source/landmarks-keyed-v01.png`：两列，面包房与横向木桥。
+- `source/herb-shed-keyed-v01.png`：两列，关闭 / 打开旧种子箱的通透药草棚。
+- `source/story-props-keyed-v01.png`：严格 `4 × 3`，公告板、白布桌和村口节庆门状态。
+- `source/riverbank-overlays-keyed-v01.png`：严格 `4 × 2`，北岸、西岸、转角、桥口与贴岸石组。
+
+地标与剧情道具提示约束：
+
+```text
+Create original production-ready top-down pixel-art source sheets for the
+formal seven-day map. Match the Stage 1B indigo roof tiles, warm cedar,
+moss/sage greens, cream cloth, brass highlights and crisp 32 × 32 tile
+density. Keep every object isolated and fully inside its prescribed cell on
+a perfectly flat #FF00FF background. The landmark sheet contains a warm
+bakery and a horizontal four-tile timber bridge without baked lantern,
+wind-chime or ribbon effects. The 4 × 3 story sheet contains four progressive
+notice-board states, four delivery/preparation table states, two festival
+tables and two village-gate states. No people, ground, cast shadow, grid,
+label, readable text, UI, logo or watermark.
+```
+
+河岸提示约束：
+
+```text
+Create one exact 4-column × 2-row transparent-ready riverbank overlay sheet
+for 32 × 32 native tiles. Include two north-bank trims, two west-bank trims,
+a northwest corner, a bridge-mouth bank, and two attached-stone variants.
+Use mossy gray-violet stones and sparse reeds that match the formal blue-green
+river. Do not include water fill, bridge deck, stepping-stone crossing,
+characters, labels, grid, border or baked lighting. Use a perfectly flat
+#FF00FF background.
+```
+
+药草棚补图提示约束：
+
+```text
+Create a two-column original pixel-art herb-stall source sheet. Both columns
+share the same airy timber frame, moss-green cloth awning with indigo edge,
+hanging dried herbs, cream tags without readable text and a lower shelf.
+Column one has a closed seed crate at lower-right; column two has the same
+crate open after the seed is found. The stall must read as pass-through
+scenery because collision cannot change. Use crisp top-down three-quarter
+pixel art on a perfectly flat #FF00FF background, with no ground, shadow,
+rain, people, grid, label or watermark.
+```
+
+`scripts/prepare_stage2b_assets.py` 自带确定性色键、去品红溢色、硬 Alpha、无抖动减色、
+分格、脚点对齐和前景遮挡层生成。仓库内源图可直接生成最终文件，不依赖未保存的临时透明图：
+
+```bash
+uv run --python 3.12 python scripts/prepare_stage2b_assets.py \
+  --landmarks assets/images/game/v0.4/source/landmarks-keyed-v01.png \
+  --herb-shed assets/images/game/v0.4/source/herb-shed-keyed-v01.png \
+  --story-props assets/images/game/v0.4/source/story-props-keyed-v01.png \
+  --riverbank assets/images/game/v0.4/source/riverbank-overlays-keyed-v01.png \
+  --landmark-output assets/images/game/v0.4/props/prop_landmarks_layers_2x2_v01.png \
+  --herb-output assets/images/game/v0.4/props/prop_herb_shed_layers_2x2_v01.png \
+  --story-output assets/images/game/v0.4/props/prop_story_props_4x3_v01.png \
+  --riverbank-output assets/images/game/v0.4/tiles/tile_riverbank_overlay_4x2_v01.png
+```
+
+运行时图集契约：
+
+- `prop_landmarks_layers_2x2_v01.png`：`384 × 320`，单元 `192 × 160`；面包房 /
+  桥梁各有 base 与 foreground。
+- `prop_herb_shed_layers_2x2_v01.png`：`192 × 160`，单元 `96 × 80`；关闭 / 打开种子箱
+  各有 base 与 foreground。
+- `prop_story_props_4x3_v01.png`：`256 × 192`，单元 `64 × 64`；12 格均有内容。
+- `tile_riverbank_overlay_4x2_v01.png`：`128 × 64`，单元 `32 × 32`；8 格均有内容。
+
+四张图集均只含 `0 / 255` Alpha，运行时可见像素没有精确或近似品红。相同源图和脚本重复
+运行会得到字节一致的 PNG。新素材加载失败时，正式流程继续执行原程序绘制。
