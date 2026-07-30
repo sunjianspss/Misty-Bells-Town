@@ -838,6 +838,49 @@ body {
   }
 }
 
+/* Desktop play keeps the game as the primary surface and moves utility cards below. */
+@media (min-width: 981px) {
+  .game-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .game-main-column,
+  .side-panel {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .canvas-frame {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+
+  .controls-panel,
+  .objective-panel,
+  .progress-panel,
+  .inventory-panel {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .shared-traces-panel {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+}
+
+/* Larger desktops double the native canvas without introducing uneven pixels. */
+@media (min-width: 1232px) {
+  .canvas-frame {
+    width: min(100%, 1194px);
+  }
+
+  #game {
+    width: 1152px;
+  }
+}
+
 .guide-shell {
   margin-top: 24px;
 }
