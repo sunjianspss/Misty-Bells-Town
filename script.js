@@ -51,6 +51,7 @@
     titleScreen: document.getElementById("title-screen"),
     titleStart: document.getElementById("title-start"),
     titleContinue: document.getElementById("title-continue"),
+    titleArtSample: document.getElementById("title-art-sample"),
     titleSaveNote: document.getElementById("title-save-note"),
     ending: document.getElementById("ending"),
     endingSummary: document.getElementById("ending-summary"),
@@ -63,11 +64,36 @@
   const TILE = 16;
   const MAP_W = 18;
   const MAP_H = 14;
+  const RENDER_SCALE = 2;
+  const LOGICAL_W = MAP_W * TILE;
+  const LOGICAL_H = MAP_H * TILE;
+  const NATIVE_W = LOGICAL_W * RENDER_SCALE;
+  const NATIVE_H = LOGICAL_H * RENDER_SCALE;
+  const TARGET_FRAME_MS = 1000 / 60;
   const WALK_MS = 130;
   const DAY_TOTAL = 7;
   const SAVE_KEY = "wuling-demo-save-v2";
   const SHARED_TRACE_LIMIT = 8;
   const SHARED_TRACE_POST_KEY = "wuling-demo-shared-posts-v1";
+  const artV04 = window.MistyBellsArtV04 || null;
+  const queryParams = new URLSearchParams(window.location.search);
+  const forceReducedMotion = queryParams.get("motion") === "reduce";
+  const reducedMotionQuery =
+    typeof window.matchMedia === "function"
+      ? window.matchMedia("(prefers-reduced-motion: reduce)")
+      : null;
+  let prefersReducedMotion =
+    forceReducedMotion || Boolean(reducedMotionQuery && reducedMotionQuery.matches);
+  let artSampleMode = false;
+  let canvasInView = true;
+  let lastRenderedAt = Number.NEGATIVE_INFINITY;
+
+  if (canvas.width !== NATIVE_W || canvas.height !== NATIVE_H) {
+    canvas.width = NATIVE_W;
+    canvas.height = NATIVE_H;
+  }
+  ctx.imageSmoothingEnabled = false;
+
   const dayChapters = [
     { day: 1, short: "春1", title: "初到小镇", summary: "先让雾铃小镇认识你。" },
     { day: 2, short: "春2", title: "告示贴上", summary: "风铃集会第一次被正式说出口。" },
@@ -279,6 +305,7 @@
       dayNoteAction: "restart",
       dayNoteButtonLabel: "继续",
       lastHint: "",
+      lastGuideHint: "",
       toastTimer: null,
       dayComplete: false,
     };
@@ -1427,7 +1454,7 @@
   }
 
   function persistProgress() {
-    if (!canPersist || state.dialogueOpen || player.moving) {
+    if (artSampleMode || !canPersist || state.dialogueOpen || player.moving) {
       return;
     }
 
@@ -1442,6 +1469,7 @@
         dialogueDone: null,
         toastTimer: null,
         lastHint: "",
+        lastGuideHint: "",
       },
       player: {
         x: player.x,
@@ -1459,6 +1487,7 @@
     refs.toast.classList.remove("visible");
     state.toastTimer = null;
     state.lastHint = "";
+    state.lastGuideHint = "";
     state.dialogueOpen = false;
     state.dialogueLines = [];
     state.dialogueIndex = 0;
@@ -1555,12 +1584,16 @@
       button.type = "button";
       button.className =
         chapter.day === state.currentDayIndex ? "chapter-btn current" : "chapter-btn";
-      button.disabled = chapter.day > state.unlockedDay;
+      button.disabled = artSampleMode || chapter.day > state.unlockedDay;
 
       const strong = document.createElement("strong");
       strong.textContent = `${chapter.short} · ${chapter.title}`;
       const span = document.createElement("span");
-      span.textContent = chapter.day > state.unlockedDay ? "尚未解锁" : "回到当天清晨";
+      span.textContent = artSampleMode
+        ? "桥边样片中暂停跳转"
+        : chapter.day > state.unlockedDay
+          ? "尚未解锁"
+          : "回到当天清晨";
       button.appendChild(strong);
       button.appendChild(span);
 
@@ -1579,9 +1612,11 @@
     const chapter = chapterMeta(state.currentDayIndex);
     refs.hudProgress.textContent = `第 ${state.currentDayIndex} / ${DAY_TOTAL} 天`;
     refs.progressCaption.textContent = `第 ${state.currentDayIndex} 天：${chapter.title}。${chapter.summary}`;
-    refs.demoStatus.textContent = state.demoFinished
-      ? "七天试玩主线已经完成。你现在可以从任意已解锁章节重新回看。"
-      : `已解锁 ${state.unlockedDay} / ${DAY_TOTAL} 天。章节按钮会回到对应天数的清晨开头。`;
+    refs.demoStatus.textContent = artSampleMode
+      ? "正在体验 v0.4 桥边黄昏样片。章节跳转与跨日已暂停，正式存档不会改变。"
+      : state.demoFinished
+        ? "七天试玩主线已经完成。你现在可以从任意已解锁章节重新回看。"
+        : `已解锁 ${state.unlockedDay} / ${DAY_TOTAL} 天。章节按钮会回到对应天数的清晨开头。`;
     renderDayStrip();
     renderJumpGrid();
   }
@@ -1781,13 +1816,14 @@
   }
 
   function showDayNote(text, action, buttonLabel) {
+    const effectiveButtonLabel = artSampleMode ? "重新体验桥边样片" : buttonLabel;
     state.noteOpen = true;
     state.dayComplete = true;
     state.dayNoteText = text;
     state.dayNoteAction = action;
-    state.dayNoteButtonLabel = buttonLabel;
+    state.dayNoteButtonLabel = effectiveButtonLabel;
     refs.dayNoteText.textContent = text;
-    refs.restartDay.textContent = buttonLabel;
+    refs.restartDay.textContent = effectiveButtonLabel;
     refs.dayNote.classList.remove("hidden");
     syncMetaUi();
     persistProgress();
@@ -1816,6 +1852,7 @@
       state.toastTimer = null;
     }
     state.lastHint = "";
+    state.lastGuideHint = "";
     state.dayComplete = false;
     syncGameSceneAudio();
   }
@@ -1833,6 +1870,7 @@
   }
 
   function startDayOne(unlockedDay, shouldPersist) {
+    artSampleMode = false;
     state = createStoryStateForDay(1, unlockedDay || 1);
     npcs = cloneNpcData();
     applyNpcLayout(1);
@@ -1842,6 +1880,7 @@
   }
 
   function startDayTwo(unlockedDay, shouldPersist) {
+    artSampleMode = false;
     state = createStoryStateForDay(2, unlockedDay || Math.max(state.unlockedDay || 1, 2));
     state.currentDayIndex = 2;
     state.day = "周二 / 春 2";
@@ -1857,6 +1896,7 @@
   }
 
   function startDayThree(unlockedDay, shouldPersist) {
+    artSampleMode = false;
     state = createStoryStateForDay(3, unlockedDay || Math.max(state.unlockedDay || 1, 3));
     state.currentDayIndex = 3;
     state.day = "周三 / 春 3";
@@ -1872,6 +1912,7 @@
   }
 
   function startDayFour(unlockedDay, shouldPersist) {
+    artSampleMode = false;
     state = createStoryStateForDay(4, unlockedDay || Math.max(state.unlockedDay || 1, 4));
     state.currentDayIndex = 4;
     state.day = "周四 / 春 4";
@@ -1887,6 +1928,7 @@
   }
 
   function startDayFive(unlockedDay, shouldPersist) {
+    artSampleMode = false;
     state = createStoryStateForDay(5, unlockedDay || Math.max(state.unlockedDay || 1, 5));
     state.currentDayIndex = 5;
     state.day = "周五 / 春 5";
@@ -1902,6 +1944,7 @@
   }
 
   function startDaySix(unlockedDay, shouldPersist) {
+    artSampleMode = false;
     state = createStoryStateForDay(6, unlockedDay || Math.max(state.unlockedDay || 1, 6));
     state.currentDayIndex = 6;
     state.day = "周六 / 春 6";
@@ -1917,6 +1960,7 @@
   }
 
   function startDaySeven(unlockedDay, shouldPersist) {
+    artSampleMode = false;
     state = createStoryStateForDay(7, unlockedDay || Math.max(state.unlockedDay || 1, 7));
     state.currentDayIndex = 7;
     state.day = "周日 / 春 7";
@@ -1931,8 +1975,45 @@
     showToast("第七天：风铃集会当天，桥边终于要为人群真正响起来了");
   }
 
+  function startBridgeDuskSample() {
+    artSampleMode = true;
+    state = createStoryStateForDay(6, 6);
+    state.currentDayIndex = 6;
+    state.day = "周六 / 春 6";
+    state.weather = "晴朗，晚风将近";
+    state.timeSlot = "傍晚";
+    state.lanternQuestAcceptedDay6 = true;
+    state.lanternLeftDoneDay6 = true;
+    state.lanternCenterDoneDay6 = true;
+    state.lanternRightDoneDay6 = true;
+    state.lanternTaskReturnedDay6 = true;
+    state.objective = "在桥边看看三盏灯，再和沈砚说话。";
+    state.objectiveTarget = "shenyan";
+    npcs = cloneNpcData();
+    applyNpcLayout(6);
+    positionPlayer(13, 10, "up");
+    resetCommonUiState();
+    finishDayStart(false);
+    showToast("v0.4 样片：桥边黄昏（不会覆盖正式存档）");
+  }
+
+  function scrollGameIntoView() {
+    window.setTimeout(() => {
+      canvas.scrollIntoView({
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+        block: "center",
+      });
+    }, 0);
+  }
+
   function handleDayNoteAction() {
     hideDayNote();
+
+    if (artSampleMode) {
+      startBridgeDuskSample();
+      showToast("桥边样片已重新开始，正式存档没有改变");
+      return;
+    }
 
     if (state.dayNoteAction === "next-day") {
       startDayTwo();
@@ -2325,8 +2406,10 @@
       refs.hint.textContent = nextHint;
     }
 
-    if (refs.guideNextStep) {
-      refs.guideNextStep.textContent = target ? `离你最近：${nextHint}` : nextHint;
+    const nextGuideHint = target ? `离你最近：${nextHint}` : nextHint;
+    if (refs.guideNextStep && state.lastGuideHint !== nextGuideHint) {
+      state.lastGuideHint = nextGuideHint;
+      refs.guideNextStep.textContent = nextGuideHint;
     }
   }
 
@@ -4263,6 +4346,17 @@
     }
   }
 
+  function snapLogical(value) {
+    return Math.round(value * RENDER_SCALE) / RENDER_SCALE;
+  }
+
+  function animationFrame(now, frameMs, frameCount, phase) {
+    if (prefersReducedMotion) {
+      return 0;
+    }
+    return Math.floor(now / frameMs + (phase || 0)) % frameCount;
+  }
+
   function updateMovement(now) {
     if (!player.moving) {
       return;
@@ -4270,8 +4364,8 @@
 
     const elapsed = now - player.moveStart;
     const t = Math.min(1, elapsed / WALK_MS);
-    player.drawX = player.fromX + (player.toX - player.fromX) * t;
-    player.drawY = player.fromY + (player.toY - player.fromY) * t;
+    player.drawX = snapLogical(player.fromX + (player.toX - player.fromX) * t);
+    player.drawY = snapLogical(player.fromY + (player.toY - player.fromY) * t);
     if (t >= 1) {
       player.moving = false;
       player.drawX = player.toX;
@@ -4297,59 +4391,172 @@
     ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
   }
 
+  function drawWaterTile(x, y, now) {
+    const px = x * TILE;
+    const py = y * TILE;
+    const dusk = state.timeSlot === "傍晚" || state.timeSlot === "夜晚";
+    const frame = animationFrame(now, 260, 4, x * 0.25 + y * 0.5);
+    drawTile(x, y, dusk ? "#355d70" : "#4f8194");
+
+    ctx.fillStyle = dusk ? "#294c60" : "#3e6d82";
+    ctx.fillRect(px, py + 12.5, TILE, 3.5);
+    ctx.fillStyle = dusk ? "#5e8796" : "#73a1aa";
+    ctx.fillRect(px + 1 + frame * 0.5, py + 3, 6, 0.5);
+    ctx.fillRect(px + 8 - frame * 0.5, py + 8.5, 6.5, 0.5);
+    ctx.fillRect(px + 3.5, py + 13.5, 4 + (frame % 2), 0.5);
+    ctx.fillStyle = dusk ? "#7895a0" : "#91b6b5";
+    ctx.fillRect(px + 10.5, py + 4.5 + (frame % 2), 3, 0.5);
+    ctx.fillRect(px + 2, py + 10.5 - (frame % 2) * 0.5, 2.5, 0.5);
+
+    if (x === 12 && !world.bridge.has(tileKey(x, y))) {
+      ctx.fillStyle = "#536a45";
+      ctx.fillRect(px, py, 1.5, TILE);
+      ctx.fillStyle = "#6f735f";
+      ctx.fillRect(px + 0.5, py + 2.5, 2, 2);
+      ctx.fillRect(px, py + 9, 2.5, 1.5);
+      ctx.fillStyle = "#9a9178";
+      ctx.fillRect(px + 1, py + 3, 1, 0.5);
+      ctx.fillRect(px + 0.5, py + 9, 1.5, 0.5);
+    }
+  }
+
+  function drawBridgeWaterReflections(now) {
+    if (state.currentDayIndex < 6) {
+      return;
+    }
+
+    const lanterns = bridgeLanternStates();
+    lanterns.forEach((lantern, index) => {
+      if (!lanternLit(lantern)) {
+        return;
+      }
+
+      const frame = animationFrame(now, 230, 4, index * 0.75);
+      const reflectionX = lantern.tileX * TILE - 4;
+      const reflectionY = (11 + index * 0.45) * TILE;
+      if (!drawArtCell("bridgeFx", 3, frame, reflectionX, reflectionY, 16, 16)) {
+        ctx.fillStyle = "rgba(244, 196, 103, 0.64)";
+        ctx.fillRect(reflectionX + 5, reflectionY + 2, 6, 0.5);
+        ctx.fillRect(reflectionX + 3, reflectionY + 5, 10, 0.5);
+        ctx.fillRect(reflectionX + 6, reflectionY + 8, 5, 0.5);
+      }
+    });
+  }
+
+  function drawBridgeDeck() {
+    const x = 11 * TILE;
+    const y = 10 * TILE;
+    const width = 4 * TILE;
+
+    ctx.fillStyle = "rgba(31, 43, 47, 0.5)";
+    ctx.fillRect(12 * TILE, y + 13.5, 3 * TILE, 5.5);
+    ctx.fillStyle = "#3f302a";
+    [12, 13.5, 14.5].forEach((tileX) => {
+      ctx.fillRect(tileX * TILE + 6, y + 12, 3, 20);
+      ctx.fillStyle = "#2b3335";
+      ctx.fillRect(tileX * TILE + 6.5, y + 18, 2, 14);
+      ctx.fillStyle = "#3f302a";
+    });
+
+    for (let plank = 0; plank < 16; plank += 1) {
+      const plankX = x + plank * 4;
+      ctx.fillStyle = plank % 3 === 0 ? "#835134" : plank % 3 === 1 ? "#95603e" : "#74462f";
+      ctx.fillRect(plankX, y, 4, TILE);
+      ctx.fillStyle = plank % 2 === 0 ? "#b07347" : "#a36842";
+      ctx.fillRect(plankX + 0.5, y + 2 + (plank % 4), 2.5, 0.5);
+      ctx.fillStyle = "#56372d";
+      ctx.fillRect(plankX + 3.5, y, 0.5, TILE);
+    }
+
+    ctx.fillStyle = "#56372d";
+    ctx.fillRect(x, y, width, 1.5);
+    ctx.fillRect(x, y + 14.5, width, 1.5);
+    ctx.fillStyle = "#b5794e";
+    ctx.fillRect(x + 1, y + 1.5, width - 2, 0.5);
+  }
+
   function drawTerrain(now) {
     for (let y = 0; y < MAP_H; y += 1) {
       for (let x = 0; x < MAP_W; x += 1) {
         const key = tileKey(x, y);
         if (world.water.has(key)) {
-          drawTile(x, y, "#5f8bab");
-          ctx.fillStyle = "#79a9c3";
-          if ((Math.floor(now / 220) + x + y) % 3 === 0) {
-            ctx.fillRect(x * TILE + 2, y * TILE + 4, 8, 1);
-            ctx.fillRect(x * TILE + 7, y * TILE + 10, 6, 1);
-          }
-          ctx.fillStyle = "#4b7493";
-          ctx.fillRect(x * TILE, y * TILE + 13, TILE, 3);
+          drawWaterTile(x, y, now);
           continue;
         }
 
         if (world.square.has(key)) {
-          drawTile(x, y, "#cbb89f");
-          ctx.fillStyle = "#b1987a";
-          ctx.fillRect(x * TILE, y * TILE, TILE, 1);
-          ctx.fillRect(x * TILE, y * TILE, 1, TILE);
-          ctx.fillRect(x * TILE + 8, y * TILE + 8, 1, 8);
+          drawTile(x, y, "#b9a58e");
+          ctx.fillStyle = "#8e7a68";
+          ctx.fillRect(x * TILE, y * TILE, TILE, 0.5);
+          ctx.fillRect(x * TILE, y * TILE, 0.5, TILE);
+          ctx.fillRect(x * TILE + 8, y * TILE + 8, 0.5, 8);
+          ctx.fillStyle = "#d0c0a7";
+          ctx.fillRect(x * TILE + 2, y * TILE + 3, 4, 0.5);
+          ctx.fillRect(x * TILE + 10, y * TILE + 11.5, 3.5, 0.5);
           continue;
         }
 
         if (world.path.has(key)) {
-          drawTile(x, y, "#b78f62");
-          ctx.fillStyle = "#a77e57";
-          ctx.fillRect(x * TILE, y * TILE + 13, TILE, 3);
-          ctx.fillRect(x * TILE + 3, y * TILE + 4, 2, 2);
-          ctx.fillRect(x * TILE + 11, y * TILE + 8, 2, 2);
+          drawTile(x, y, "#a77a51");
+          ctx.fillStyle = "#895f42";
+          ctx.fillRect(x * TILE, y * TILE + 13.5, TILE, 2.5);
+          ctx.fillStyle = "#c69a63";
+          ctx.fillRect(x * TILE + 2.5, y * TILE + 3.5, 2, 1);
+          ctx.fillRect(x * TILE + 10.5, y * TILE + 8, 2.5, 1);
+          ctx.fillStyle = "#79543b";
+          ctx.fillRect(x * TILE + 6, y * TILE + 11.5, 1, 0.5);
           continue;
         }
 
         const palette = paletteForTerrain(x, y);
         drawTile(x, y, palette.base);
         ctx.fillStyle = palette.dark;
-        ctx.fillRect(x * TILE + 3, y * TILE + 4, 2, 3);
-        ctx.fillRect(x * TILE + 11, y * TILE + 9, 2, 2);
+        ctx.fillRect(x * TILE + 3, y * TILE + 4, 1.5, 2.5);
+        ctx.fillRect(x * TILE + 11, y * TILE + 9, 1.5, 1.5);
+        ctx.fillRect(x * TILE + 6.5, y * TILE + 13, 0.5, 1.5);
         ctx.fillStyle = palette.light;
-        ctx.fillRect(x * TILE + 9, y * TILE + 3, 2, 2);
+        ctx.fillRect(x * TILE + 9, y * TILE + 3, 1.5, 1);
+        ctx.fillRect(x * TILE + 1.5, y * TILE + 11, 1, 0.5);
       }
     }
 
-    world.bridge.forEach((key) => {
-      const [x, y] = key.split(",").map(Number);
-      drawTile(x, y, "#906747");
-      ctx.fillStyle = "#6f4c32";
-      ctx.fillRect(x * TILE, y * TILE, TILE, 2);
-      ctx.fillRect(x * TILE, y * TILE + 14, TILE, 2);
-      ctx.fillStyle = "#a57b57";
-      ctx.fillRect(x * TILE + 2, y * TILE + 4, 12, 2);
-      ctx.fillRect(x * TILE + 2, y * TILE + 9, 12, 2);
+    drawBridgeWaterReflections(now);
+    drawBridgeDeck();
+  }
+
+  function drawBridgeBackRail() {
+    const x = 11 * TILE - 2;
+    const y = 10 * TILE - 4;
+    const width = 4 * TILE + 4;
+    ctx.fillStyle = "#3f302a";
+    ctx.fillRect(x, y + 1, width, 2);
+    ctx.fillStyle = "#6f4530";
+    ctx.fillRect(x, y, width, 1);
+    [0, 16, 32, 48, 66].forEach((offset) => {
+      ctx.fillStyle = "#56372d";
+      ctx.fillRect(x + offset, y - 5, 3, 10);
+      ctx.fillStyle = "#95603e";
+      ctx.fillRect(x + offset + 0.5, y - 4.5, 1, 7);
+      ctx.fillStyle = "#3f302a";
+      ctx.fillRect(x + offset - 0.5, y - 6, 4, 1.5);
+    });
+  }
+
+  function drawBridgeFrontRail() {
+    const x = 11 * TILE - 2;
+    const y = 11 * TILE - 1;
+    const width = 4 * TILE + 4;
+    ctx.fillStyle = "#352925";
+    ctx.fillRect(x, y + 1, width, 2.5);
+    ctx.fillStyle = "#6f4530";
+    ctx.fillRect(x, y, width, 1);
+    [0, 16, 32, 48, 66].forEach((offset) => {
+      ctx.fillStyle = "#4b342b";
+      ctx.fillRect(x + offset, y - 4, 3.5, 10);
+      ctx.fillStyle = "#95603e";
+      ctx.fillRect(x + offset + 0.5, y - 3.5, 1, 7);
+      ctx.fillStyle = "#352925";
+      ctx.fillRect(x + offset - 0.5, y - 5, 4.5, 1.5);
     });
   }
 
@@ -4358,7 +4565,7 @@
     const py = y * TILE;
     ctx.fillStyle = "#6c513a";
     ctx.fillRect(px + 8, py + 12, 8, 12);
-    const sway = Math.sin(now / 550 + x) * 0.4;
+    const sway = [-0.5, 0, 0.5, 0][animationFrame(now, 420, 4, x * 0.25)];
     ctx.fillStyle = "#5f8d4f";
     ctx.fillRect(px + 2 + sway, py + 2, 18, 12);
     ctx.fillRect(px, py + 8, 22, 10);
@@ -4390,7 +4597,7 @@
     ctx.fillRect(px + 35, py + 19, 12, 6);
     ctx.fillStyle = "#835d42";
     ctx.fillRect(px + 52, py + 2, 8, 10);
-    const smoke = Math.sin(now / 420) * 1.5;
+    const smoke = [-1, 0, 1, 0][animationFrame(now, 360, 4)];
     ctx.fillStyle = "rgba(252, 248, 240, 0.7)";
     ctx.fillRect(px + 55 + smoke, py - 4, 5, 5);
     ctx.fillRect(px + 58 - smoke, py - 10, 4, 4);
@@ -4585,27 +4792,58 @@
     });
   }
 
+  function bridgeLanternStates() {
+    return [
+      {
+        active:
+          state.currentDayIndex === 6 ? state.lanternQuestAcceptedDay6 : state.lanternLeftDoneDay6,
+        done: state.lanternLeftDoneDay6,
+        tileX: 11,
+        tileY: 9,
+      },
+      {
+        active:
+          state.currentDayIndex === 6 ? state.lanternQuestAcceptedDay6 : state.lanternCenterDoneDay6,
+        done: state.lanternCenterDoneDay6,
+        tileX: 12,
+        tileY: 10,
+      },
+      {
+        active:
+          state.currentDayIndex === 6 ? state.lanternQuestAcceptedDay6 : state.lanternRightDoneDay6,
+        done: state.lanternRightDoneDay6,
+        tileX: 14,
+        tileY: 9,
+      },
+    ];
+  }
+
+  function lanternLit(lantern) {
+    return Boolean(
+      lantern.done &&
+        (state.timeSlot === "傍晚" ||
+          state.timeSlot === "夜晚" ||
+          state.currentDayIndex === 6),
+    );
+  }
+
   function drawLamps(now) {
-    world.lamps.forEach((lamp) => {
+    if (state.currentDayIndex >= 6) {
+      return;
+    }
+
+    world.lamps.forEach((lamp, index) => {
       const px = lamp.x * TILE;
       const py = lamp.y * TILE;
-      const daySixLit =
-        state.currentDayIndex === 6 &&
-        ((lamp.x === 11 && state.lanternLeftDoneDay6) || (lamp.x === 14 && state.lanternRightDoneDay6));
-      if (state.timeSlot === "傍晚" || state.timeSlot === "夜晚" || daySixLit) {
-        const glow = 7 + Math.sin(now / 300 + lamp.x) * 1.5;
-        ctx.fillStyle =
-          state.timeSlot === "傍晚" || state.timeSlot === "夜晚"
-            ? "rgba(241, 191, 109, 0.12)"
-            : "rgba(241, 191, 109, 0.08)";
-        ctx.beginPath();
-        ctx.arc(px + 8, py + 4, glow, 0, Math.PI * 2);
-        ctx.fill();
+      const lit = state.timeSlot === "傍晚" || state.timeSlot === "夜晚";
+      const frame = lit ? 2 + animationFrame(now, 210, 2, index * 0.5) : 0;
+      ctx.fillStyle = "#56372d";
+      ctx.fillRect(px + 7, py + 5, 2, 11);
+      ctx.fillRect(px + 7, py + 5, 6, 1);
+      if (!drawArtCell("bridgeFx", 2, frame, px + 2, py - 3, 12, 12)) {
+        ctx.fillStyle = lit ? "#f4c467" : "#786553";
+        ctx.fillRect(px + 6, py + 2, 4, 4);
       }
-      ctx.fillStyle = "#6f523a";
-      ctx.fillRect(px + 7, py + 7, 2, 9);
-      ctx.fillStyle = "#f0bf6d";
-      ctx.fillRect(px + 6, py + 3, 4, 4);
     });
   }
 
@@ -4616,30 +4854,35 @@
 
     const px = 11 * TILE;
     const py = 9 * TILE;
-    const sway = Math.sin(now / 280) * 1.5;
+    const swaySteps = [-1, 0, 1, 0];
+    const sway = swaySteps[animationFrame(now, 190, 4)];
     ctx.fillStyle = "#7a5b41";
-    ctx.fillRect(px + 4, py - 10, 1, 12);
-    ctx.fillRect(px + 18, py - 10, 1, 12);
+    ctx.fillRect(px + 4, py - 10, 1.5, 12);
+    ctx.fillRect(px + 18, py - 10, 1.5, 12);
     ctx.strokeStyle = "#8f6c53";
+    ctx.lineWidth = 0.5;
     ctx.beginPath();
-    ctx.moveTo(px + 4, py - 9);
-    ctx.lineTo(px + 18, py - 9);
+    ctx.moveTo(px + 4.5, py - 9);
+    ctx.lineTo(px + 18.5, py - 9);
     ctx.stroke();
 
     ctx.fillStyle = "#d58f73";
-    ctx.fillRect(px + 7, py - 8 + sway, 3, 4);
+    ctx.fillRect(px + 7 + sway * 0.5, py - 8, 2, 4);
     ctx.fillStyle = "#f0e3c7";
-    ctx.fillRect(px + 11, py - 7 - sway * 0.4, 3, 4);
+    ctx.fillRect(px + 11 - sway * 0.5, py - 7, 2, 4);
     ctx.fillStyle = "#7aa091";
-    ctx.fillRect(px + 15, py - 8 + sway * 0.7, 3, 4);
+    ctx.fillRect(px + 15 + sway * 0.5, py - 8, 2, 4);
 
     if (state.currentDayIndex >= 3) {
-      ctx.fillStyle = "#7a5b41";
-      ctx.fillRect(px + 12, py - 2, 1, 8);
-      ctx.fillStyle = "#d9ae66";
-      ctx.fillRect(px + 11, py + 4, 3, 3);
-      ctx.fillStyle = state.bellTestReportedDay3 ? "#f0bf6d" : "#c98b6c";
-      ctx.fillRect(px + 11, py + 6, 3, 2);
+      const chimeFrame = animationFrame(now, 180, 4);
+      if (!drawArtCell("bridgeFx", 0, chimeFrame, px + 4, py - 11, 16, 16)) {
+        ctx.fillStyle = "#7a5b41";
+        ctx.fillRect(px + 12, py - 2, 1, 8);
+        ctx.fillStyle = "#d9ae66";
+        ctx.fillRect(px + 11, py + 4, 3, 3);
+        ctx.fillStyle = state.bellTestReportedDay3 ? "#f0bf6d" : "#c98b6c";
+        ctx.fillRect(px + 11, py + 6, 3, 2);
+      }
 
       if (state.currentDayIndex === 3 && state.bellIssueSeenDay3 && !state.bellTestReportedDay3) {
         const markers = [
@@ -4657,6 +4900,8 @@
     }
 
     if (state.currentDayIndex >= 5) {
+      const ribbonFrame = animationFrame(now, 190, 4);
+      const ribbonSteps = [-1, 0, 1, 0];
       const ribbonStates = [
         {
           active: state.currentDayIndex === 5 ? state.ribbonQuestAcceptedDay5 : state.ribbonBlueDoneDay5,
@@ -4664,7 +4909,7 @@
           knotX: 10 * TILE + 8,
           knotY: 10 * TILE + 7,
           color: "#7aa8c3",
-          sway: Math.sin(now / 240) * 1.8,
+          sway: ribbonSteps[ribbonFrame] * 0.5,
         },
         {
           active: state.currentDayIndex === 5 ? state.ribbonQuestAcceptedDay5 : state.ribbonWhiteDoneDay5,
@@ -4672,7 +4917,7 @@
           knotX: 12 * TILE + 8,
           knotY: 9 * TILE + 12,
           color: "#efe7d7",
-          sway: Math.sin(now / 260 + 0.7) * 1.5,
+          sway: ribbonSteps[(ribbonFrame + 1) % 4] * 0.5,
         },
         {
           active: state.currentDayIndex === 5 ? state.ribbonQuestAcceptedDay5 : state.ribbonGoldDoneDay5,
@@ -4680,7 +4925,7 @@
           knotX: 15 * TILE + 2,
           knotY: 10 * TILE + 8,
           color: "#d9ae66",
-          sway: Math.sin(now / 230 + 1.2) * 2.1,
+          sway: ribbonSteps[(ribbonFrame + 2) % 4],
         },
       ];
 
@@ -4696,55 +4941,32 @@
       });
 
       if (state.ribbonTaskReturnedDay5) {
-        ctx.fillStyle = "#d58f73";
-        ctx.fillRect(px + 5, py - 12, 2, 4);
-        ctx.fillStyle = "#efe7d7";
-        ctx.fillRect(px + 9, py - 11, 2, 4);
-        ctx.fillStyle = "#d9ae66";
-        ctx.fillRect(px + 13, py - 12, 2, 4);
+        if (!drawArtCell("bridgeFx", 1, ribbonFrame, px - 8, py - 14, 16, 16)) {
+          ctx.fillStyle = "#d58f73";
+          ctx.fillRect(px + 5, py - 12, 2, 4);
+          ctx.fillStyle = "#efe7d7";
+          ctx.fillRect(px + 9, py - 11, 2, 4);
+          ctx.fillStyle = "#d9ae66";
+          ctx.fillRect(px + 13, py - 12, 2, 4);
+        }
       }
     }
 
     if (state.currentDayIndex >= 6) {
-      const lanternStates = [
-        {
-          active: state.currentDayIndex === 6 ? state.lanternQuestAcceptedDay6 : state.lanternLeftDoneDay6,
-          done: state.lanternLeftDoneDay6,
-          x: 11 * TILE + 7,
-          y: 9 * TILE + 2,
-        },
-        {
-          active: state.currentDayIndex === 6 ? state.lanternQuestAcceptedDay6 : state.lanternCenterDoneDay6,
-          done: state.lanternCenterDoneDay6,
-          x: 12 * TILE + 7,
-          y: 10 * TILE + 2,
-        },
-        {
-          active: state.currentDayIndex === 6 ? state.lanternQuestAcceptedDay6 : state.lanternRightDoneDay6,
-          done: state.lanternRightDoneDay6,
-          x: 14 * TILE + 7,
-          y: 9 * TILE + 2,
-        },
-      ];
-
-      lanternStates.forEach((lantern, index) => {
-        ctx.fillStyle = "#6f523a";
-        ctx.fillRect(lantern.x, lantern.y, 3, 5);
-        ctx.fillStyle = lantern.done ? "#f0bf6d" : lantern.active ? "#d7c5a3" : "#8b715a";
-        ctx.fillRect(lantern.x + 1, lantern.y + 1, 1, 3);
-
-        const lanternLit =
-          state.timeSlot === "傍晚" ||
-          state.timeSlot === "夜晚" ||
-          (state.currentDayIndex === 6 && lantern.done);
-
-        if (lantern.done && lanternLit) {
-          const glow = 5 + Math.sin(now / 260 + index) * 1.2;
-          const glowOpacity = state.timeSlot === "傍晚" ? 0.16 : 0.08;
-          ctx.fillStyle = `rgba(241, 191, 109, ${glowOpacity})`;
-          ctx.beginPath();
-          ctx.ellipse(lantern.x + 1.5, lantern.y + 2.5, glow, glow - 1, 0, 0, Math.PI * 2);
-          ctx.fill();
+      bridgeLanternStates().forEach((lantern, index) => {
+        const lit = lanternLit(lantern);
+        const frame = lantern.done
+          ? lit
+            ? 2 + animationFrame(now, 220, 2, index * 0.5)
+            : 1
+          : 0;
+        const x = lantern.tileX * TILE;
+        const y = lantern.tileY * TILE;
+        if (!drawArtCell("bridgeFx", 2, frame, x, y, 16, 16)) {
+          ctx.fillStyle = "#56372d";
+          ctx.fillRect(x + 6.5, y + 2, 3, 8);
+          ctx.fillStyle = lantern.done ? "#f4c467" : lantern.active ? "#d7c5a3" : "#786553";
+          ctx.fillRect(x + 7, y + 4, 2, 4);
         }
       });
 
@@ -4839,15 +5061,16 @@
     ctx.stroke();
 
     sharedWorldState.traces.slice(0, anchorXs.length).forEach((trace, index) => {
-      const sway = Math.sin(now / 260 + index * 0.8) * 1.4;
+      const swaySteps = [-0.5, 0, 0.5, 0];
+      const sway = swaySteps[animationFrame(now, 210, 4, index * 0.5)];
       const x = anchorXs[index];
       const y = anchorY + 3 + (index % 2 === 0 ? 0 : 1);
       ctx.fillStyle = "#7a5b41";
       ctx.fillRect(x + 1, y - 3, 1, 4);
       ctx.fillStyle = sharedTraceColorHex(trace.ribbonColor);
-      ctx.fillRect(x + sway, y, 3, 4);
+      ctx.fillRect(snapLogical(x + sway), y, 3, 4);
       ctx.fillStyle = "rgba(255, 249, 239, 0.72)";
-      ctx.fillRect(x + 1 + sway, y + 1, 1, 1);
+      ctx.fillRect(snapLogical(x + 1 + sway), y + 1, 1, 1);
     });
   }
 
@@ -4885,8 +5108,10 @@
     ];
 
     bits.forEach((bit, index) => {
-      const x = ((now / bit.speed) + bit.offset) % (MAP_W * TILE + 24) - 12;
-      const y = bit.baseY + Math.sin(now / 620 + index) * 6;
+      const motionNow = prefersReducedMotion ? 0 : now;
+      const x =
+        (Math.floor(motionNow / bit.speed) + bit.offset) % (MAP_W * TILE + 24) - 12;
+      const y = bit.baseY + Math.round(Math.sin(motionNow / 620 + index) * 6);
       ctx.fillStyle = bit.color;
       ctx.fillRect(x, y, 2, 2);
       ctx.fillRect(x + 1, y + 2, 1, 2);
@@ -4947,17 +5172,112 @@
       return;
     }
 
-    const pulse = Math.sin(now / 220) * 2;
+    const pulse = prefersReducedMotion ? 0 : Math.round(Math.sin(now / 220));
     const px = target.x * TILE + 8;
-    const py = target.y * TILE + 3;
+    const py =
+      target.y * TILE +
+      (target.id === "azhi" ? -10 : target.id && npcBase[target.id] ? 1 : 2);
+    ctx.fillStyle = "rgba(76, 52, 36, 0.7)";
+    ctx.fillRect(px - 1.5, py - 2.5 - pulse, 3, 5);
     ctx.fillStyle = "#fff1b2";
     ctx.beginPath();
-    ctx.moveTo(px, py - 5 - pulse);
-    ctx.lineTo(px + 3, py);
-    ctx.lineTo(px, py + 5 - pulse * 0.4);
-    ctx.lineTo(px - 3, py);
+    ctx.moveTo(px, py - 2 - pulse);
+    ctx.lineTo(px + 1.5, py);
+    ctx.lineTo(px, py + 2);
+    ctx.lineTo(px - 1.5, py);
     ctx.closePath();
     ctx.fill();
+  }
+
+  function drawArtCell(key, row, column, x, y, width, height) {
+    if (!artV04) {
+      return false;
+    }
+
+    const image = artV04.get(key);
+    const spec = artV04.specs[key];
+    if (!image || !spec) {
+      return false;
+    }
+
+    ctx.drawImage(
+      image,
+      column * spec.cellWidth,
+      row * spec.cellHeight,
+      spec.cellWidth,
+      spec.cellHeight,
+      snapLogical(x),
+      snapLogical(y),
+      width,
+      height,
+    );
+    return true;
+  }
+
+  function characterAnimationFrame(entity, now) {
+    if (entity.palette === "player" && entity.moving) {
+      const progress = Math.min(0.999, Math.max(0, (now - entity.moveStart) / WALK_MS));
+      return Math.floor(progress * 4);
+    }
+    return animationFrame(now, 720, 2, entity.palette === "azhi" ? 0.5 : 0) * 2;
+  }
+
+  function drawCharacterSprite(entity, now) {
+    const isVillager = ["linmai", "shenyan", "xuhuai", "qin"].includes(entity.palette);
+    const key =
+      entity.palette === "player"
+        ? "player"
+        : entity.palette === "azhi"
+          ? "azhi"
+          : isVillager
+            ? "villagers"
+            : null;
+    if (!key || !artV04) {
+      return false;
+    }
+
+    const spec = artV04.specs[key];
+    const image = artV04.get(key);
+    if (!spec || !image) {
+      return false;
+    }
+
+    const drawX = entity.drawX !== undefined ? entity.drawX : entity.x;
+    const drawY = entity.drawY !== undefined ? entity.drawY : entity.y;
+    const facing = entity.facing || "down";
+    const row = spec.rows[facing] ?? spec.rows.down ?? 0;
+    const frame =
+      key === "villagers"
+        ? spec.columns[entity.palette]
+        : characterAnimationFrame(entity, now);
+    const width = spec.cellWidth / RENDER_SCALE;
+    const height = spec.cellHeight / RENDER_SCALE;
+    const footX = snapLogical(drawX * TILE + TILE / 2);
+    const footY = snapLogical(drawY * TILE + TILE);
+    const x = snapLogical(footX - width / 2);
+    const y = snapLogical(footY - height);
+
+    ctx.fillStyle = "rgba(35, 25, 18, 0.2)";
+    ctx.fillRect(snapLogical(footX - 4.5), snapLogical(footY - 1.5), 9, 1.5);
+    ctx.drawImage(
+      image,
+      frame * spec.cellWidth,
+      row * spec.cellHeight,
+      spec.cellWidth,
+      spec.cellHeight,
+      x,
+      y,
+      width,
+      height,
+    );
+
+    if (entity.palette === "player" && carryingBread()) {
+      ctx.fillStyle = "#56372d";
+      ctx.fillRect(x + 6.5, y + 1.5, 7, 2.5);
+      ctx.fillStyle = "#f4c467";
+      ctx.fillRect(x + 7.5, y + 0.5, 5, 1.5);
+    }
+    return true;
   }
 
   function characterColors(kind) {
@@ -4990,12 +5310,18 @@
   }
 
   function drawCharacter(entity, now) {
+    if (drawCharacterSprite(entity, now)) {
+      return;
+    }
+
     const colors = characterColors(entity.palette || "player");
     const drawX = entity.drawX !== undefined ? entity.drawX : entity.x;
     const drawY = entity.drawY !== undefined ? entity.drawY : entity.y;
-    const bob = Math.sin(now / 360 + drawX * 0.6 + drawY * 0.4) * 0.45;
-    const px = drawX * TILE + 2;
-    const py = drawY * TILE + 2 + bob;
+    const bob = prefersReducedMotion
+      ? 0
+      : Math.round(Math.sin(now / 360 + drawX * 0.6 + drawY * 0.4)) * 0.5;
+    const px = snapLogical(drawX * TILE + 2);
+    const py = snapLogical(drawY * TILE + 2 + bob);
 
     ctx.fillStyle = "rgba(35, 25, 18, 0.16)";
     ctx.fillRect(px + 2, py + 12, 10, 3);
@@ -5064,10 +5390,13 @@
   function drawMist(now) {
     const opacity =
       state.currentDayIndex === 4 ? 0.18 : state.timeSlot === "傍晚" ? 0.05 : 0.12;
+    const motionNow = prefersReducedMotion ? 0 : now;
     ctx.fillStyle = `rgba(255, 251, 242, ${opacity})`;
     for (let i = 0; i < 4; i += 1) {
-      const x = ((now / 80) + i * 55) % (MAP_W * TILE + 80) - 40;
-      const y = 20 + i * 34 + Math.sin(now / 900 + i) * 6;
+      const x = snapLogical(
+        ((Math.floor(motionNow / 80) + i * 55) % (MAP_W * TILE + 80)) - 40,
+      );
+      const y = 20 + i * 34 + Math.round(Math.sin(motionNow / 900 + i) * 6);
       ctx.beginPath();
       ctx.ellipse(x, y, 34, 12, 0, 0, Math.PI * 2);
       ctx.fill();
@@ -5079,11 +5408,12 @@
       return;
     }
 
+    const motionNow = prefersReducedMotion ? 0 : now;
     ctx.strokeStyle = "rgba(203, 220, 230, 0.44)";
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 0.5;
     for (let i = 0; i < 34; i += 1) {
-      const x = (i * 23 + Math.floor(now / 5)) % (MAP_W * TILE + 24) - 12;
-      const y = (i * 17 + Math.floor(now / 3)) % (MAP_H * TILE + 20) - 10;
+      const x = (i * 23 + Math.floor(motionNow / 5)) % (MAP_W * TILE + 24) - 12;
+      const y = (i * 17 + Math.floor(motionNow / 3)) % (MAP_H * TILE + 20) - 10;
       ctx.beginPath();
       ctx.moveTo(x, y);
       ctx.lineTo(x - 2, y + 6);
@@ -5094,55 +5424,238 @@
   function drawEveningTint() {
     if (state.timeSlot === "傍晚") {
       if (state.currentDayIndex === 7) {
-        ctx.fillStyle = "rgba(244, 184, 108, 0.14)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "rgba(83, 61, 84, 0.08)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "rgba(244, 184, 108, 0.16)";
+        ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
+        ctx.fillStyle = "rgba(83, 61, 84, 0.1)";
+        ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
       } else if (state.currentDayIndex === 6) {
-        ctx.fillStyle = "rgba(228, 171, 112, 0.12)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "rgba(54, 64, 90, 0.08)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "rgba(228, 171, 112, 0.18)";
+        ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
+        ctx.fillStyle = "rgba(54, 64, 90, 0.12)";
+        ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
       } else {
         ctx.fillStyle = "rgba(239, 186, 134, 0.12)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
       }
       return;
     }
 
     if (state.timeSlot === "夜晚") {
       ctx.fillStyle = "rgba(68, 53, 45, 0.2)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
+    }
+  }
+
+  function drawLampLightPass(now) {
+    const lanterns =
+      state.currentDayIndex >= 6
+        ? bridgeLanternStates()
+        : world.lamps.map((lamp) => ({
+            done: true,
+            tileX: lamp.x,
+            tileY: lamp.y,
+          }));
+
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    lanterns.forEach((lantern, index) => {
+      if (!lanternLit(lantern)) {
+        return;
+      }
+
+      const flicker = animationFrame(now, 190, 4, index * 0.5);
+      const pulse = flicker === 1 ? 0.5 : flicker === 3 ? -0.5 : 0;
+      const cx = lantern.tileX * TILE + 8;
+      const cy = lantern.tileY * TILE + 8;
+      ctx.fillStyle = "rgba(244, 196, 103, 0.085)";
+      ctx.fillRect(
+        snapLogical(cx - 11 - pulse),
+        snapLogical(cy - 8 - pulse),
+        22 + pulse * 2,
+        16 + pulse * 2,
+      );
+      ctx.fillStyle = "rgba(244, 196, 103, 0.17)";
+      ctx.fillRect(
+        snapLogical(cx - 7 - pulse),
+        snapLogical(cy - 5 - pulse),
+        14 + pulse * 2,
+        10 + pulse * 2,
+      );
+      ctx.fillStyle = "rgba(255, 226, 148, 0.32)";
+      ctx.fillRect(cx - 3, cy - 2.5, 6, 5);
+      ctx.fillStyle = "rgba(255, 242, 194, 0.68)";
+      ctx.fillRect(cx - 1, cy - 1.5, 2, 3);
+    });
+    ctx.restore();
+
+    if (
+      state.currentDayIndex >= 6 &&
+      (state.timeSlot === "傍晚" || state.timeSlot === "夜晚")
+    ) {
+      const sparkleFrame = animationFrame(now, 240, 4);
+      ctx.fillStyle = "rgba(255, 217, 129, 0.72)";
+      ctx.fillRect(14 * TILE + 2 + sparkleFrame, 12 * TILE + 2, 7, 0.5);
+      ctx.fillRect(13 * TILE + 7 - sparkleFrame * 0.5, 13 * TILE + 4, 10, 0.5);
+      ctx.fillStyle = "rgba(255, 237, 181, 0.58)";
+      ctx.fillRect(14 * TILE + 7, 11 * TILE + 9 + (sparkleFrame % 2), 4, 0.5);
+    }
+  }
+
+  function bridgeDuskSceneLayers() {
+    if (
+      !artSampleMode ||
+      state.currentDayIndex !== 6 ||
+      state.timeSlot !== "傍晚" ||
+      !artV04
+    ) {
+      return null;
+    }
+
+    const background = artV04.get("bridgeDuskBackground");
+    const foreground = artV04.get("bridgeDuskForeground");
+    return background && foreground ? { background, foreground } : null;
+  }
+
+  function drawBridgeDuskSceneImage(image) {
+    ctx.drawImage(
+      image,
+      0,
+      0,
+      image.naturalWidth,
+      image.naturalHeight,
+      0,
+      0,
+      LOGICAL_W,
+      LOGICAL_H,
+    );
+  }
+
+  function drawBridgeDuskWaterFx(now) {
+    const frame = animationFrame(now, 260, 4);
+    const shimmerLines = [
+      { x: 238, y: 174, width: 12, phase: 0, warm: false },
+      { x: 252, y: 184, width: 18, phase: 2, warm: true },
+      { x: 214, y: 191, width: 11, phase: 1, warm: false },
+      { x: 232, y: 198, width: 22, phase: 3, warm: true },
+      { x: 186, y: 207, width: 14, phase: 2, warm: false },
+      { x: 208, y: 216, width: 19, phase: 0, warm: true },
+      { x: 258, y: 220, width: 13, phase: 1, warm: false },
+    ];
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(267, 126);
+    ctx.lineTo(LOGICAL_W, 126);
+    ctx.lineTo(LOGICAL_W, LOGICAL_H);
+    ctx.lineTo(160, LOGICAL_H);
+    ctx.lineTo(184, 198);
+    ctx.lineTo(218, 181);
+    ctx.lineTo(248, 163);
+    ctx.closePath();
+    ctx.clip();
+
+    shimmerLines.forEach((line) => {
+      const offset = ((frame + line.phase) % 3) - 1;
+      ctx.fillStyle = line.warm
+        ? "rgba(255, 189, 111, 0.56)"
+        : "rgba(123, 194, 211, 0.42)";
+      ctx.fillRect(
+        snapLogical(line.x + offset),
+        line.y,
+        line.width - Math.abs(offset) * 2,
+        0.5,
+      );
+      if (line.warm) {
+        ctx.fillStyle = "rgba(255, 222, 156, 0.3)";
+        ctx.fillRect(
+          snapLogical(line.x + 3 - offset),
+          line.y + 2.5,
+          Math.max(4, line.width - 8),
+          0.5,
+        );
+      }
+    });
+    ctx.restore();
+  }
+
+  function drawBridgeDuskAtmosphere(now) {
+    const lightFrame = animationFrame(now, 210, 4);
+    const lightPulse = lightFrame === 1 ? 0.5 : lightFrame === 3 ? -0.5 : 0;
+    const lampCenters = [
+      { x: 203.5, y: 144.5 },
+      { x: 225, y: 144.5 },
+      { x: 245.5, y: 144.5 },
+    ];
+
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    lampCenters.forEach((lamp, index) => {
+      const offset = index === 1 ? -lightPulse : lightPulse;
+      ctx.fillStyle = "rgba(255, 171, 72, 0.06)";
+      ctx.fillRect(
+        snapLogical(lamp.x - 9 - offset),
+        snapLogical(lamp.y - 7 - offset),
+        18 + offset * 2,
+        14 + offset * 2,
+      );
+      ctx.fillStyle = "rgba(255, 198, 92, 0.13)";
+      ctx.fillRect(
+        snapLogical(lamp.x - 5.5 - offset),
+        snapLogical(lamp.y - 4 - offset),
+        11 + offset * 2,
+        8 + offset * 2,
+      );
+      ctx.fillStyle = "rgba(255, 236, 166, 0.32)";
+      ctx.fillRect(lamp.x - 1.5, lamp.y - 1.5, 3, 3);
+    });
+    ctx.restore();
+
+    const sway = [-0.5, 0, 0.5, 0][animationFrame(now, 190, 4)];
+    const ribbons = [
+      { x: 154.5, color: "rgba(106, 168, 211, 0.58)" },
+      { x: 160.5, color: "rgba(227, 111, 101, 0.55)" },
+      { x: 166, color: "rgba(240, 190, 100, 0.54)" },
+    ];
+    ribbons.forEach((ribbon, index) => {
+      ctx.fillStyle = ribbon.color;
+      ctx.fillRect(
+        snapLogical(ribbon.x + sway * (index % 2 === 0 ? 1 : -1)),
+        116,
+        0.5,
+        14 + index,
+      );
+    });
+
+    const motionNow = prefersReducedMotion ? 0 : Math.floor(now / 120);
+    for (let i = 0; i < 14; i += 1) {
+      const x = (i * 31 + motionNow + (i % 3) * 7) % (LOGICAL_W + 18) - 9;
+      const y = (i * 19 + Math.floor(motionNow / 2)) % (LOGICAL_H + 12) - 6;
+      ctx.fillStyle =
+        i % 3 === 0 ? "rgba(244, 163, 174, 0.7)" : "rgba(247, 202, 176, 0.52)";
+      ctx.fillRect(snapLogical(x), snapLogical(y), i % 4 === 0 ? 1.5 : 1, 0.5);
     }
   }
 
   function drawWorld(now) {
-    drawTerrain(now);
-    drawFlowers();
-    drawReeds();
-    drawTree(0, 9, now);
-    drawBakery(now);
-    drawHerbShed();
-    drawNoticeBoard();
-    drawTable();
-    drawGate();
-    drawLamps(now);
-    drawFestivalPrep(now);
-    drawSharedBridgeTraces(now);
-    drawFestivalAtmosphere(now);
-    drawObjectiveSpark(now);
-
-    const nearby = nearestTarget();
-    if (nearby) {
-      const pulse = Math.sin(now / 180) * 1.2;
-      ctx.strokeStyle = "rgba(255, 245, 202, 0.9)";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(
-        nearby.x * TILE - pulse,
-        nearby.y * TILE - pulse,
-        TILE + pulse * 2,
-        TILE + pulse * 2,
-      );
+    const duskLayers = bridgeDuskSceneLayers();
+    if (duskLayers) {
+      drawBridgeDuskSceneImage(duskLayers.background);
+      drawBridgeDuskWaterFx(now);
+    } else {
+      drawTerrain(now);
+      drawFlowers();
+      drawReeds();
+      drawTree(0, 9, now);
+      drawBakery(now);
+      drawHerbShed();
+      drawNoticeBoard();
+      drawTable();
+      drawGate();
+      drawBridgeBackRail();
+      drawLamps(now);
+      drawFestivalPrep(now);
+      drawSharedBridgeTraces(now);
+      drawFestivalAtmosphere(now);
     }
 
     const characters = [
@@ -5152,22 +5665,78 @@
       { ...npcs.xuhuai, drawX: npcs.xuhuai.x, drawY: npcs.xuhuai.y },
       { ...npcs.shenyan, drawX: npcs.shenyan.x, drawY: npcs.shenyan.y },
       { ...npcs.azhi, drawX: npcs.azhi.x, drawY: npcs.azhi.y },
-      { palette: "player", drawX: player.drawX, drawY: player.drawY },
+      {
+        palette: "player",
+        drawX: player.drawX,
+        drawY: player.drawY,
+        facing: player.facing,
+        moving: player.moving,
+        moveStart: player.moveStart,
+      },
     ];
 
     characters.sort((a, b) => a.drawY - b.drawY);
     characters.forEach((character) => drawCharacter(character, now));
-    drawMist(now);
-    drawRain(now);
-    drawEveningTint();
+    if (duskLayers) {
+      drawBridgeDuskSceneImage(duskLayers.foreground);
+      drawBridgeDuskAtmosphere(now);
+    } else {
+      drawBridgeFrontRail();
+      drawMist(now);
+      drawRain(now);
+      drawEveningTint();
+      drawLampLightPass(now);
+    }
+
+    const nearby = nearestTarget();
+    if (nearby) {
+      const pulse = prefersReducedMotion
+        ? 0
+        : Math.round(Math.sin(now / 180) * 2) / 2;
+      ctx.strokeStyle = "rgba(255, 245, 202, 0.96)";
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(
+        snapLogical(nearby.x * TILE - pulse),
+        snapLogical(nearby.y * TILE - pulse),
+        TILE + pulse * 2,
+        TILE + pulse * 2,
+      );
+    }
+    drawObjectiveSpark(now);
   }
 
   function loop(now) {
-    updateMovement(now);
-    updateHint();
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawWorld(now);
     window.requestAnimationFrame(loop);
+    if (document.hidden) {
+      return;
+    }
+    updateMovement(now);
+    if (!canvasInView) {
+      return;
+    }
+    if (Number.isFinite(lastRenderedAt)) {
+      const elapsed = now - lastRenderedAt;
+      if (elapsed < TARGET_FRAME_MS - 0.5) {
+        return;
+      }
+      const elapsedFrames = Math.max(
+        1,
+        Math.floor((elapsed + 0.5) / TARGET_FRAME_MS),
+      );
+      lastRenderedAt += elapsedFrames * TARGET_FRAME_MS;
+      if (lastRenderedAt > now) {
+        lastRenderedAt = now;
+      }
+    } else {
+      lastRenderedAt = now;
+    }
+
+    updateHint();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    drawWorld(now);
   }
 
   const moveKeys = {
@@ -5253,6 +5822,11 @@
   refs.resetDemo.addEventListener("click", () => {
     unlockGameAudio("重新开始");
     hideTitleScreen();
+    if (artSampleMode) {
+      startBridgeDuskSample();
+      showToast("桥边样片已重新开始，正式存档没有改变");
+      return;
+    }
     resetGame();
     showToast("已重新开始这一周");
   });
@@ -5260,6 +5834,7 @@
     unlockGameAudio("开始试玩");
     hideTitleScreen();
     resetGame();
+    scrollGameIntoView();
   });
   refs.titleContinue.addEventListener("click", () => {
     unlockGameAudio("继续试玩");
@@ -5267,12 +5842,23 @@
       hideTitleScreen();
       hideEnding();
       showToast("已继续上次进度");
+      scrollGameIntoView();
       return;
     }
 
     hideTitleScreen();
     startDayOne(1);
+    scrollGameIntoView();
   });
+  if (refs.titleArtSample) {
+    refs.titleArtSample.addEventListener("click", () => {
+      unlockGameAudio("桥边样片");
+      hideTitleScreen();
+      hideEnding();
+      startBridgeDuskSample();
+      scrollGameIntoView();
+    });
+  }
   refs.endingRestart.addEventListener("click", () => {
     unlockGameAudio("重新开始");
     hideEnding();
@@ -5333,8 +5919,33 @@
     }
   });
 
+  if (reducedMotionQuery) {
+    const syncReducedMotion = (event) => {
+      prefersReducedMotion = forceReducedMotion || event.matches;
+    };
+    if (typeof reducedMotionQuery.addEventListener === "function") {
+      reducedMotionQuery.addEventListener("change", syncReducedMotion);
+    } else if (typeof reducedMotionQuery.addListener === "function") {
+      reducedMotionQuery.addListener(syncReducedMotion);
+    }
+  }
+
+  if (typeof window.IntersectionObserver === "function") {
+    const canvasObserver = new window.IntersectionObserver(
+      (entries) => {
+        canvasInView = entries.some((entry) => entry.isIntersecting);
+      },
+      { rootMargin: "200px 0px" },
+    );
+    canvasObserver.observe(canvas);
+  }
+
   syncGameAudioButtons();
   refreshTitleScreen();
   startDayOne(1, false);
+  if (queryParams.get("scene") === "bridge-dusk") {
+    hideTitleScreen();
+    startBridgeDuskSample();
+  }
   window.requestAnimationFrame(loop);
 })();

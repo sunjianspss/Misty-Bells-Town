@@ -254,6 +254,8 @@ body {
 
 .canvas-frame {
   position: relative;
+  width: min(100%, 618px);
+  justify-self: center;
   padding: 20px;
   border-radius: 28px;
   background:
@@ -265,13 +267,15 @@ body {
 
 #game {
   display: block;
-  width: 100%;
-  max-width: 864px;
+  width: 576px;
+  max-width: 100%;
   height: auto;
-  aspect-ratio: 288 / 224;
+  margin-inline: auto;
+  aspect-ratio: 576 / 448;
   image-rendering: pixelated;
   border-radius: 22px;
-  border: 1px solid rgba(76, 55, 39, 0.28);
+  border: 0;
+  box-shadow: inset 0 0 0 1px rgba(76, 55, 39, 0.28);
   background: linear-gradient(180deg, #dfe6d7, #e8eedf);
 }
 
@@ -642,6 +646,16 @@ body {
 
 .panel-btn.secondary {
   background: linear-gradient(180deg, rgba(242, 241, 232, 0.98), rgba(224, 236, 222, 0.96));
+}
+
+.panel-btn.art-sample-btn {
+  border-color: rgba(118, 103, 126, 0.34);
+  background:
+    linear-gradient(135deg, rgba(118, 103, 126, 0.95), rgba(86, 55, 45, 0.96));
+  color: #fff3dc;
+  box-shadow:
+    0 12px 26px rgba(75, 48, 49, 0.16),
+    inset 0 1px 0 rgba(255, 244, 222, 0.16);
 }
 
 .panel-btn:active,
@@ -1337,14 +1351,21 @@ code {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 649px) {
   .page {
     width: min(100% - 18px, 100%);
     padding-top: 18px;
   }
 
   .canvas-frame {
-    padding: 12px;
+    width: min(100%, 300px);
+    padding: 5px;
+    border-radius: 20px;
+  }
+
+  #game {
+    width: 288px;
+    border-radius: 15px;
   }
 
   .game-main-column {
@@ -1452,5 +1473,16 @@ code {
   .touch-btn.interact {
     min-width: 136px;
     padding: 13px 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

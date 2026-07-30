@@ -15,6 +15,7 @@
     />
     <meta property="og:image" content="assets/images/cover-art.jpg" />
     <title>雾铃小镇 - 七日试玩 Demo</title>
+    <link rel="icon" href="assets/images/cover-art.jpg" type="image/jpeg" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -136,7 +137,12 @@
       <section class="game-shell" id="play-now">
         <div class="game-main-column">
           <div class="canvas-frame">
-            <canvas id="game" width="288" height="224" aria-label="雾铃小镇七日试玩 Demo"></canvas>
+            <canvas
+              id="game"
+              width="576"
+              height="448"
+              aria-label="雾铃小镇七日试玩 Demo，v0.4 原创像素美术样片"
+            ></canvas>
             <div class="overlay hint" id="hint"></div>
             <div class="overlay toast" id="toast"></div>
           </div>
@@ -342,7 +348,7 @@
           </article>
           <article class="title-panel">
             <h3>这次多了什么</h3>
-            <p>增加了自动存档、章节进度、试玩总结和更适合发给别人直接体验的包装。</p>
+            <p>新增一张不覆盖存档的 v0.4 桥边黄昏美术样片，可先确认重制方向。</p>
           </article>
         </div>
 
@@ -350,6 +356,9 @@
           <button class="panel-btn primary" id="title-start" type="button">开始新试玩</button>
           <button class="panel-btn secondary hidden" id="title-continue" type="button">
             继续上次进度
+          </button>
+          <button class="panel-btn art-sample-btn" id="title-art-sample" type="button">
+            体验 v0.4 桥边样片
           </button>
         </div>
 
@@ -395,6 +404,7 @@
 
     <script src="shared-world-config.js"></script>
     <script src="shared-world.js"></script>
+    <script src="assets/game-art-v04.js"></script>
     <script src="script.js"></script>
   </body>
 </html>
