@@ -189,6 +189,13 @@
     xuhuai: { id: "xuhuai", name: "许槐", palette: "xuhuai" },
     qin: { id: "qin", name: "秦婆婆", palette: "qin" },
   };
+  const dialogueSpeakerIds = {
+    阿栀: "azhi",
+    林麦: "linmai",
+    沈砚: "shenyan",
+    许槐: "xuhuai",
+    秦婆婆: "qin",
+  };
 
   const dayLayouts = {
     1: {
@@ -1784,6 +1791,14 @@
     refs.dialogueText.textContent = line.text;
     refs.dialogueNext.textContent =
       state.dialogueIndex === state.dialogueLines.length - 1 ? "收下这句话" : "继续";
+  }
+
+  function currentDialogueSpeakerId() {
+    if (!state.dialogueOpen) {
+      return null;
+    }
+    const line = state.dialogueLines[state.dialogueIndex];
+    return line && dialogueSpeakerIds[line.speaker] ? dialogueSpeakerIds[line.speaker] : null;
   }
 
   function advanceDialogue() {
@@ -5779,25 +5794,59 @@
     return animationFrame(now, 720, 2, entity.palette === "azhi" ? 0.5 : 0) * 2;
   }
 
-  function drawCharacterSprite(entity, now) {
+  function characterSpriteSelection(entity, now) {
     const isVillager = ["linmai", "shenyan", "xuhuai", "qin"].includes(entity.palette);
     const isFestivalCrowd = /^crowd[1-5]$/.test(entity.palette || "");
-    const key =
-      entity.palette === "player"
-        ? "player"
-        : entity.palette === "azhi"
-          ? "azhi"
-          : isVillager
-            ? "villagers"
-            : isFestivalCrowd
-              ? "festivalCrowd"
-              : null;
-    if (!key || !artV04) {
+
+    if (entity.palette === "player") {
+      return { key: "player", frame: characterAnimationFrame(entity, now) };
+    }
+
+    if (entity.palette === "azhi") {
+      if (entity.talking && artV04 && artV04.get("azhiTalk")) {
+        return { key: "azhiTalk", frame: animationFrame(now, 260, 2, 0.5) };
+      }
+      return { key: "azhi", frame: characterAnimationFrame(entity, now) };
+    }
+
+    if (isVillager) {
+      const key =
+        entity.talking && artV04 && artV04.get("villagersTalk")
+          ? "villagersTalk"
+          : artV04 && artV04.get("villagersIdle")
+            ? "villagersIdle"
+            : "villagers";
+      const spec = artV04 && artV04.specs[key];
+      const baseFrame = spec && spec.columns ? spec.columns[entity.palette] : undefined;
+      if (!Number.isInteger(baseFrame)) {
+        return null;
+      }
+      const frameMs = key === "villagersTalk" ? 260 : 720;
+      return {
+        key,
+        frame: key === "villagers" ? baseFrame : baseFrame + animationFrame(now, frameMs, 2),
+      };
+    }
+
+    if (isFestivalCrowd) {
+      return { key: "festivalCrowd", frame: undefined };
+    }
+
+    return null;
+  }
+
+  function drawCharacterSprite(entity, now) {
+    if (!artV04) {
       return false;
     }
 
-    const spec = artV04.specs[key];
-    const image = artV04.get(key);
+    const selection = characterSpriteSelection(entity, now);
+    if (!selection) {
+      return false;
+    }
+
+    const spec = artV04.specs[selection.key];
+    const image = artV04.get(selection.key);
     if (!spec || !image) {
       return false;
     }
@@ -5807,9 +5856,10 @@
     const facing = entity.facing || "down";
     const row = spec.rows ? (spec.rows[facing] ?? spec.rows.down ?? 0) : 0;
     const frame =
-      key === "villagers" || key === "festivalCrowd"
-        ? spec.columns[entity.palette]
-        : characterAnimationFrame(entity, now);
+      selection.frame === undefined && spec.columns ? spec.columns[entity.palette] : selection.frame;
+    if (!Number.isInteger(frame)) {
+      return false;
+    }
     const width = spec.cellWidth / RENDER_SCALE;
     const height = spec.cellHeight / RENDER_SCALE;
     const footX = snapLogical(drawX * TILE + TILE / 2);
@@ -6231,13 +6281,39 @@
       drawFestivalAtmosphere(now);
     }
 
+    const dialogueSpeakerId = currentDialogueSpeakerId();
     const characters = [
       ...festivalCrowdCharacters(),
-      { ...npcs.qin, drawX: npcs.qin.x, drawY: npcs.qin.y },
-      { ...npcs.linmai, drawX: npcs.linmai.x, drawY: npcs.linmai.y },
-      { ...npcs.xuhuai, drawX: npcs.xuhuai.x, drawY: npcs.xuhuai.y },
-      { ...npcs.shenyan, drawX: npcs.shenyan.x, drawY: npcs.shenyan.y },
-      { ...npcs.azhi, drawX: npcs.azhi.x, drawY: npcs.azhi.y },
+      {
+        ...npcs.qin,
+        drawX: npcs.qin.x,
+        drawY: npcs.qin.y,
+        talking: dialogueSpeakerId === "qin",
+      },
+      {
+        ...npcs.linmai,
+        drawX: npcs.linmai.x,
+        drawY: npcs.linmai.y,
+        talking: dialogueSpeakerId === "linmai",
+      },
+      {
+        ...npcs.xuhuai,
+        drawX: npcs.xuhuai.x,
+        drawY: npcs.xuhuai.y,
+        talking: dialogueSpeakerId === "xuhuai",
+      },
+      {
+        ...npcs.shenyan,
+        drawX: npcs.shenyan.x,
+        drawY: npcs.shenyan.y,
+        talking: dialogueSpeakerId === "shenyan",
+      },
+      {
+        ...npcs.azhi,
+        drawX: npcs.azhi.x,
+        drawY: npcs.azhi.y,
+        talking: dialogueSpeakerId === "azhi",
+      },
       {
         palette: "player",
         drawX: player.drawX,

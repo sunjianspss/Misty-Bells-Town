@@ -444,3 +444,33 @@ uv run --python 3.12 python scripts/prepare_stage2c_assets.py \
 处理脚本执行确定性色键、去品红 / 绿幕、可见 Alpha 裁切、内容分带、脚点对齐、硬 Alpha、
 无抖动减色与树冠前景层生成。相同源图重复运行得到字节一致的 PNG；任一运行时素材失败时
 只回退对应旧绘制。
+
+## 阶段 3A：基础人物动画派生
+
+本阶段不使用新的外部提示词或素材。`scripts/prepare_stage3a_assets.py` 只读取已入库的原创
+人物图集，按单元将脚点归一到原生 `y=46`，将旧玩家软 Alpha 阈值化为硬 Alpha，并以 1 原生像素
+上身起伏和两帧举手像素簇派生待机 / 对话姿态。没有裁切封面、复制参考截图或改变角色设计。
+
+源图与运行时文件：
+
+- `characters/chr_player_walk_4dir_4f_v01.png` →
+  `characters/chr_player_walk_4dir_4f_v02.png`（`160 × 192`，四方向 × 四步）。
+- `characters/chr_azhi_walk_4dir_4f_v02.png` →
+  `characters/chr_azhi_talk_4dir_2f_v01.png`（`80 × 192`，四方向 × 两帧）。
+- `characters/chr_villagers_idle_4dir_v02.png` →
+  `characters/chr_villagers_idle_4dir_2f_v03.png` 与
+  `characters/chr_villagers_talk_4dir_2f_v01.png`（均为 `320 × 192`；每位村民连续两列）。
+
+```bash
+env UV_CACHE_DIR="$PWD/.uv-cache" uv run --python 3.12 python scripts/prepare_stage3a_assets.py \
+  --player assets/images/game/v0.4/characters/chr_player_walk_4dir_4f_v01.png \
+  --azhi assets/images/game/v0.4/characters/chr_azhi_walk_4dir_4f_v02.png \
+  --villagers assets/images/game/v0.4/characters/chr_villagers_idle_4dir_v02.png \
+  --player-output assets/images/game/v0.4/characters/chr_player_walk_4dir_4f_v02.png \
+  --azhi-talk-output assets/images/game/v0.4/characters/chr_azhi_talk_4dir_2f_v01.png \
+  --villagers-idle-output assets/images/game/v0.4/characters/chr_villagers_idle_4dir_2f_v03.png \
+  --villagers-talk-output assets/images/game/v0.4/characters/chr_villagers_talk_4dir_2f_v01.png
+```
+
+该脚本在写入后验证每个 `40 × 48` 单元有硬 Alpha、非空内容及同一脚点基线；重复使用相同
+输入得到字节一致输出。

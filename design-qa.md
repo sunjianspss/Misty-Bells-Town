@@ -1,4 +1,6 @@
-# 阶段 2D.1 花草密度重制 QA
+# 雾铃小镇 v0.4 视觉 QA
+
+## 阶段 2D.1 花草密度重制
 
 ## 验证范围
 
@@ -81,6 +83,43 @@
 - 桌面与手机正式流程控制台均无 warning / error。
 
 ## 最终发现
+
+- P0：无。
+- P1：无。
+- P2：无。
+
+阶段 2D.1 result: passed
+
+## 阶段 3A 人物基础动画
+
+### 验证范围
+
+- 保留 `18 × 14` 地图、全部碰撞、五位 NPC 的既有坐标 / 互动 ID、七天剧情、存档与键盘 /
+  触屏操作，只更换人物运行时图集和渲染选择逻辑。
+- 玩家维持四方向四步移动；阿栀与四位村民具备两帧待机；打开对话时，只有当前行对应的
+  具名 NPC 使用两帧举手交谈姿态。公告栏和旁白不会触发人物动作。
+- `?motion=reduce` 与系统减少动态效果路径固定首帧；移动、交谈、剧情推进和存档不等待动画。
+
+### 技术与素材验证
+
+- `node --check script.js` 与 `node --check assets/game-art-v04.js`：通过。
+- `uv run --python 3.12 python -m py_compile scripts/prepare_stage3a_assets.py`：通过。
+- `git diff --check`：通过。
+- `prepare_stage3a_assets.py` 重新生成的四张图集均通过尺寸、硬 Alpha、非空内容和统一
+  `y=46` 脚点验证；与入库 PNG 逐字节比较一致。
+- 本地 HTTP 服务确认 `chr_player_walk_4dir_4f_v02.png`、`chr_azhi_talk_4dir_2f_v01.png`、
+  `chr_villagers_idle_4dir_2f_v03.png`、`chr_villagers_talk_4dir_2f_v01.png` 全部返回 HTTP 200。
+
+### 交互与响应式验证
+
+- 桌面真实浏览器：从标题页开始，按上 / 右靠近阿栀并打开三行对话；说话人姿态正确加载，
+  对话能完整关闭。
+- `?motion=reduce`：重复上述对话流程后，游戏恢复移动；无动画依赖导致的卡死。
+- `390 × 844` 手机视口：对话卡片、触屏方向键和“交谈 / 互动”按钮均可访问；“上”触屏按钮
+  成功触发移动并请求脚步音。
+- 桌面与手机浏览器控制台均无 warning / error。
+
+### 最终发现
 
 - P0：无。
 - P1：无。

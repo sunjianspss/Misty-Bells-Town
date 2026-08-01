@@ -1,7 +1,7 @@
 (function () {
   const specs = {
     player: {
-      src: "assets/images/game/v0.4/characters/chr_player_walk_4dir_4f_v01.png",
+      src: "assets/images/game/v0.4/characters/chr_player_walk_4dir_4f_v02.png",
       cellWidth: 40,
       cellHeight: 48,
       rows: { up: 0, right: 1, left: 2, down: 3 },
@@ -12,12 +12,32 @@
       cellHeight: 48,
       rows: { down: 0, left: 1, right: 2, up: 3 },
     },
+    azhiTalk: {
+      src: "assets/images/game/v0.4/characters/chr_azhi_talk_4dir_2f_v01.png",
+      cellWidth: 40,
+      cellHeight: 48,
+      rows: { down: 0, left: 1, right: 2, up: 3 },
+    },
     villagers: {
       src: "assets/images/game/v0.4/characters/chr_villagers_idle_4dir_v02.png",
       cellWidth: 40,
       cellHeight: 48,
       rows: { down: 0, left: 1, right: 2, up: 3 },
       columns: { linmai: 0, shenyan: 1, xuhuai: 2, qin: 3 },
+    },
+    villagersIdle: {
+      src: "assets/images/game/v0.4/characters/chr_villagers_idle_4dir_2f_v03.png",
+      cellWidth: 40,
+      cellHeight: 48,
+      rows: { down: 0, left: 1, right: 2, up: 3 },
+      columns: { linmai: 0, shenyan: 2, xuhuai: 4, qin: 6 },
+    },
+    villagersTalk: {
+      src: "assets/images/game/v0.4/characters/chr_villagers_talk_4dir_2f_v01.png",
+      cellWidth: 40,
+      cellHeight: 48,
+      rows: { down: 0, left: 1, right: 2, up: 3 },
+      columns: { linmai: 0, shenyan: 2, xuhuai: 4, qin: 6 },
     },
     festivalCrowd: {
       src: "assets/images/game/v0.4/characters/chr_festival_crowd_idle_5x1_v01.png",
