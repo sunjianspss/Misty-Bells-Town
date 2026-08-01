@@ -142,7 +142,7 @@ text, logo, watermark, painterly blur, antialiasing or baked dusk lighting.
 每行四个确定性变体。任意同材质变体横向或纵向相邻时外沿像素一致；素材加载失败时，
 正式七天流程继续回退原程序绘制。
 
-## 阶段 2D 模块化草坪补完
+## 阶段 2D / 2D.1 模块化草坪与花草密度补完
 
 本阶段的目标不是再生成一张整景图，而是把阶段 1B 样片的“三尺度草坪组织”拆回正式
 `18 × 14` 地图可复用的 PNG 图集：单格微纹理、跨 `2 × 2` 格的不规则明暗草团，以及
@@ -167,8 +167,9 @@ text, logo, watermark, painterly blur, antialiasing or baked dusk lighting.
   冷暖 / 明暗微纹理变体。
 - `tiles/tile_grass_patches_4x2_v01.png`：`256 × 128`，单元 `64 × 64`，八个低对比、
   硬 Alpha 的跨格不规则草团。
-- `tiles/tile_grass_details_4x4_v01.png`：`128 × 128`，单元 `32 × 32`，苔影 / 地衣 /
-  裸土、杂草、小型碎花和混合过渡格。
+- `tiles/tile_grass_details_4x4_v01.png`：阶段 2D 初版低密度细节图集，保留用于回溯。
+- `tiles/tile_grass_details_4x4_v02.png`：阶段 2D.1 正式图集，`128 × 128`、单元
+  `32 × 32`；以更清晰的紫 / 粉 / 金碎花、绿草、金色草穗与混合过渡格提高可见密度。
 
 可复现命令：
 
@@ -179,11 +180,32 @@ uv run --python 3.12 python scripts/prepare_stage2d_assets.py \
   --terrain assets/images/game/v0.4/tiles/tile_terrain_base_4x4_v01.png \
   --grass-output assets/images/game/v0.4/tiles/tile_grass_base_4x2_v01.png \
   --patches-output assets/images/game/v0.4/tiles/tile_grass_patches_4x2_v01.png \
-  --details-output assets/images/game/v0.4/tiles/tile_grass_details_4x4_v01.png
+  --details-output assets/images/game/v0.4/tiles/tile_grass_details_4x4_v02.png
 ```
 
 相同输入与脚本重复运行得到字节一致 PNG。草地底纹加载失败时先回退阶段 2A 草地，再
 回退旧程序绘制；跨格草团或细节图集失败时只省略该层。
+
+阶段 2D.1 的视觉指令记录（实现模式：`deterministic sprite remix`）：
+
+```text
+Use case: stylized-concept
+Asset type: top-down pixel-art ground-flora atlas
+Primary request: rebuild the visible flower-and-grass density seen in the bridge-dusk
+reference using medium-density purple, pink and gold wildflower clusters plus green and
+gold grass tufts, while preserving gameplay readability.
+Composition: strict 4 × 4 atlas, 32 × 32 transparent cells; keep each detail compact,
+grounded and inside a safe border. Mix quiet moss/soil cells with strong flower/grass cells.
+Style: original hard-alpha pixel art, limited v0.4 palette, crisp integer pixels, no blur,
+no antialiasing, no drop shadow, no text, no frame, no grid, no terrain baked underneath.
+Inputs: the user reference screenshot for density only; existing original
+tile_flora_static_4x2_v01.png for shapes and palette.
+Constraints: do not crop the cover, do not copy screenshot pixels, do not use external art,
+and keep every output cell usable as an independent transparent PNG sprite.
+```
+
+本次运行环境未开放内置 ImageGen，因此没有调用 CLI 图像生成回退；`v02` 由仓库内既有
+原创花草图集确定性缩放、调色与重排，运行时仍只绘制透明 PNG。
 
 ## 阶段 2B 地标、剧情道具与河岸
 

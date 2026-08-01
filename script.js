@@ -4479,10 +4479,9 @@
 
   function buildGrassDetailClearTiles() {
     const clear = makeSet();
-    Object.values(dayLayouts).forEach((layout) => {
-      Object.values(layout).forEach((npc) => {
-        addGrassDetailClearZone(clear, npc.x, npc.y);
-      });
+    const currentLayout = dayLayouts[state.currentDayIndex] || {};
+    Object.values(currentLayout).forEach((npc) => {
+      addGrassDetailClearZone(clear, npc.x, npc.y, 0);
     });
     [
       [3, 5],
@@ -4497,7 +4496,7 @@
       [12, 10],
       [13, 10],
       [14, 10],
-    ].forEach(([x, y]) => addGrassDetailClearZone(clear, x, y));
+    ].forEach(([x, y]) => addGrassDetailClearZone(clear, x, y, 0));
     return clear;
   }
 
@@ -4516,20 +4515,11 @@
     return false;
   }
 
-  function nearHeroFlower(x, y) {
-    return world.flowers.some(
-      (flower) =>
-        Math.abs(flower.x - x) <= 1 && Math.abs(flower.y - y) <= 1,
-    );
-  }
-
   let grassPatchPlacementsCache = null;
+  let grassPatchPlacementsCacheDay = null;
 
   function buildGrassPatchPlacements() {
     const clearTiles = buildGrassDetailClearTiles();
-    const heroFlowerTiles = new Set(
-      world.flowers.map((flower) => tileKey(flower.x, flower.y)),
-    );
     const placements = [];
     for (let y = 0; y < MAP_H - 1; y += 2) {
       for (let x = 0; x < MAP_W - 1; x += 2) {
@@ -4545,8 +4535,7 @@
             return (
               !isGrassTile(tileX, tileY) ||
               world.solids.has(key) ||
-              clearTiles.has(key) ||
-              heroFlowerTiles.has(key)
+              clearTiles.has(key)
             );
           })
         ) {
@@ -4554,7 +4543,7 @@
         }
         const highDensity =
           (x >= 8 && y <= 6) || (x <= 4 && y <= 4);
-        const density = highDensity ? 78 : y >= 8 ? 50 : 62;
+        const density = highDensity ? 90 : y >= 8 ? 72 : 80;
         if (grassHash(x / 2, y / 2, 229) % 100 >= density) {
           continue;
         }
@@ -4572,8 +4561,12 @@
     if (!artV04 || !artV04.get("grassPatches")) {
       return;
     }
-    if (!grassPatchPlacementsCache) {
+    if (
+      !grassPatchPlacementsCache ||
+      grassPatchPlacementsCacheDay !== state.currentDayIndex
+    ) {
       grassPatchPlacementsCache = buildGrassPatchPlacements();
+      grassPatchPlacementsCacheDay = state.currentDayIndex;
     }
     grassPatchPlacementsCache.forEach((placement) => {
       drawArtCell(
@@ -4589,15 +4582,18 @@
   }
 
   let grassDetailPlacementsCache = null;
+  let grassDetailPlacementsCacheDay = null;
 
   function buildGrassDetailPlacements() {
     const clearTiles = buildGrassDetailClearTiles();
     const heroFlowerTiles = new Set(
       world.flowers.map((flower) => tileKey(flower.x, flower.y)),
     );
-    const lowDetails = [0, 0, 1, 1, 2, 4, 5, 6, 7, 14, 14];
-    const edgeDetails = [0, 1, 2, 3, 4, 5, 6, 7, 14, 14];
-    const strongDetails = [8, 9, 10, 11, 12, 13, 15];
+    const lowDetails = [0, 0, 1, 1, 2, 3, 4, 5, 6, 7, 14, 14, 14];
+    const edgeDetails = [0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 14, 14];
+    const strongDetails = [
+      8, 8, 9, 9, 10, 10, 12, 12, 12, 13, 13, 15, 15, 15,
+    ];
     const placements = [];
 
     for (let y = 0; y < MAP_H; y += 1) {
@@ -4606,7 +4602,8 @@
         if (
           !isGrassTile(x, y) ||
           world.solids.has(key) ||
-          heroFlowerTiles.has(key)
+          heroFlowerTiles.has(key) ||
+          clearTiles.has(key)
         ) {
           continue;
         }
@@ -4614,38 +4611,52 @@
         const macroX = Math.floor(x / 2);
         const macroY = Math.floor(y / 2);
         const macroSlot = (x & 1) + (y & 1) * 2;
-        const reservedBaseSlot = grassHash(macroX, macroY, 113) & 3;
-        if (macroSlot === reservedBaseSlot) {
-          continue;
-        }
-
         const highDensity =
           (x >= 9 && y <= 7) || (x <= 5 && y <= 5);
         const mediumDensity =
           (x <= 5 && y >= 5 && y <= 8) ||
           (x >= 3 && x <= 11 && y >= 9);
         const travelEdge = adjacentToTravelSurface(x, y);
-        const clear = clearTiles.has(key);
-        const density = clear
-          ? 15
-          : highDensity
-            ? 78
-            : mediumDensity
-              ? 58
-              : travelEdge
-                ? 64
-                : 62;
+        const reservedBaseSlot = grassHash(macroX, macroY, 113) & 3;
+        if (
+          !highDensity &&
+          !mediumDensity &&
+          !travelEdge &&
+          macroSlot === reservedBaseSlot
+        ) {
+          continue;
+        }
+
+        const density = highDensity
+          ? 92
+          : mediumDensity
+            ? 86
+            : travelEdge
+              ? 88
+              : 72;
         if (grassHash(x, y, 131) % 100 >= density) {
           continue;
         }
 
-        const strongChance = highDensity ? 70 : mediumDensity ? 55 : 60;
-        const strongSlot = grassHash(macroX, macroY, 167) & 3;
+        const strongChance = highDensity
+          ? 94
+          : mediumDensity
+            ? 88
+            : travelEdge
+              ? 82
+              : 68;
+        const strongCount = highDensity
+          ? 3
+          : mediumDensity || travelEdge
+            ? 2
+            : 1;
+        const strongOrder = [0, 1, 2, 3].sort(
+          (left, right) =>
+            grassHash(macroX * 4 + left, macroY, 167) -
+            grassHash(macroX * 4 + right, macroY, 167),
+        );
         const allowStrong =
-          !clear &&
-          !travelEdge &&
-          !nearHeroFlower(x, y) &&
-          macroSlot === strongSlot &&
+          strongOrder.indexOf(macroSlot) < strongCount &&
           grassHash(x, y, 173) % 100 < strongChance;
         const pool = allowStrong
           ? strongDetails
@@ -4667,6 +4678,8 @@
           x,
           y,
           detailIndex,
+          offsetX: (grassHash(x, y, 223) % 5) - 2,
+          offsetY: (grassHash(x, y, 227) % 5) - 2,
         });
       }
     }
@@ -4677,8 +4690,12 @@
     if (!artV04 || !artV04.get("grassDetails")) {
       return;
     }
-    if (!grassDetailPlacementsCache) {
+    if (
+      !grassDetailPlacementsCache ||
+      grassDetailPlacementsCacheDay !== state.currentDayIndex
+    ) {
       grassDetailPlacementsCache = buildGrassDetailPlacements();
+      grassDetailPlacementsCacheDay = state.currentDayIndex;
     }
     grassDetailPlacementsCache.forEach((placement) => {
       const row = Math.floor(placement.detailIndex / 4);
@@ -4687,8 +4704,8 @@
         "grassDetails",
         row,
         column,
-        placement.x * TILE,
-        placement.y * TILE,
+        placement.x * TILE + placement.offsetX,
+        placement.y * TILE + placement.offsetY,
         TILE,
         TILE,
       );

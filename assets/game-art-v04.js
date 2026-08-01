@@ -37,7 +37,7 @@
       cellHeight: 32,
     },
     grassDetails: {
-      src: "assets/images/game/v0.4/tiles/tile_grass_details_4x4_v01.png",
+      src: "assets/images/game/v0.4/tiles/tile_grass_details_4x4_v02.png",
       cellWidth: 32,
       cellHeight: 32,
     },

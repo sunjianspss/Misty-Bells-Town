@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the Stage 2D modular grass atlases from existing original v0.4 art."""
+"""Build the Stage 2D/2D.1 modular grass atlases from original v0.4 art."""
 
 from __future__ import annotations
 
@@ -487,10 +487,17 @@ def build_detail_cells(
     grass_tiles: list[Image.Image],
 ) -> list[list[Image.Image]]:
     flora_cells = split_grid(flora.convert("RGBA"), 4, 2)
-    flower_colors = ("#9a739e", "#c17f89", "#c89b4e", "#d2c58f")
+    flower_colors = ("#9871ad", "#b9758d", "#c49443", "#806b91")
     flowers = [
         tint_foliage(
-            mini_sprite(flora_cells[0][index], 4, 4),
+            mini_sprite(flora_cells[0][index], 6, 5),
+            flower_colors[index],
+        )
+        for index in range(4)
+    ]
+    small_flowers = [
+        tint_foliage(
+            mini_sprite(flora_cells[0][index], 4, 3),
             flower_colors[index],
         )
         for index in range(4)
@@ -535,23 +542,15 @@ def build_detail_cells(
     for column, flower in enumerate(flowers):
         paste_center_bottom(cells[2][column], flower, bottom=3)
 
-    composite(cells[3][0], flowers[0], (3, 8))
-    composite(cells[3][0], flowers[2], (8, 6))
-    composite(cells[3][1], flowers[1], (3, 7))
-    composite(cells[3][1], flowers[3], (8, 8))
-    composite(cells[3][2], soil, (3, 9))
+    composite(cells[3][0], small_flowers[0], (2, 8))
+    composite(cells[3][0], small_flowers[2], (8, 6))
+    composite(cells[3][1], small_flowers[1], (2, 7))
+    composite(cells[3][1], small_flowers[3], (8, 8))
+    composite(cells[3][2], soil, (2, 10))
     composite(cells[3][2], weeds[1], (8, 6))
     cells[3][3].alpha_composite(moss_detail(grass_tiles[7], light=False))
-    composite(
-        cells[3][3],
-        mini_sprite(flowers[0], 4, 4),
-        (3, 7),
-    )
-    composite(
-        cells[3][3],
-        mini_sprite(flowers[2], 4, 4),
-        (9, 5),
-    )
+    composite(cells[3][3], small_flowers[0], (2, 7))
+    composite(cells[3][3], small_flowers[2], (8, 5))
     return [[hard_alpha(cell) for cell in row] for row in cells]
 
 
