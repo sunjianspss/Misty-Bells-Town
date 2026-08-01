@@ -125,4 +125,42 @@
 - P1：无。
 - P2：无。
 
+阶段 3A result: passed
+
+## 阶段 3B 人物专属动作
+
+### 验证范围
+
+- 保留 `18 × 14` 地图、碰撞、NPC / 互动坐标、七天剧情、存档、键盘与触屏操作；本轮仅增加
+  五位既有角色的可选专属动作图集与渲染优先级。
+- 阿栀在春 6 / 春 7 整理布条；林麦递出面包篮；沈砚自春 4 起试灯 / 拉铃绳；许槐自春 4 起
+  敲击风铃；秦婆婆自春 5 起查看药草。未满足日期时各角色沿用阶段 3A 待机。
+- 具名对话的交谈动作优先于专属动作；对话打开时其余角色不播放工作动作；
+  `?motion=reduce` 与系统减少动态效果路径固定首帧，剧情与操作不依赖动画。
+
+### 技术与素材验证
+
+- `node --check script.js` 与 `node --check assets/game-art-v04.js`：通过。
+- `uv run --python 3.12 python -m py_compile scripts/prepare_stage3b_assets.py`：通过。
+- `git diff --check`：通过。
+- `prepare_stage3b_assets.py` 重新生成两张图集均通过尺寸、硬 Alpha、非空内容和统一 `y=46`
+  脚点验证；与入库 PNG 逐字节比较一致。
+- 本地 HTTP 服务确认 `chr_azhi_ribbons_4dir_2f_v01.png` 与
+  `chr_villagers_work_4dir_2f_v01.png` 均返回 HTTP 200。
+
+### 交互与响应式验证
+
+- 桌面真实浏览器的春 6 桥边样片中，阿栀布条、林麦面包篮、沈砚绳索、许槐工具与秦婆婆药草
+  均正常出现；画布无拉伸或层级遮挡。
+- 靠近沈砚并打开对话后，沈砚切换为交谈姿态，专属动作停止，关闭对话后可恢复；浏览器控制台
+  无 warning / error。
+- `?scene=bridge-dusk&motion=reduce` 可正常进入样片且动画固定首帧；`390 × 844` 手机视口中
+  画布、方向键和“交谈 / 互动”按钮均无裁切或重叠，控制台无 warning / error。
+
+### 最终发现
+
+- P0：无。
+- P1：无。
+- P2：无。
+
 final result: passed

@@ -474,3 +474,26 @@ env UV_CACHE_DIR="$PWD/.uv-cache" uv run --python 3.12 python scripts/prepare_st
 
 该脚本在写入后验证每个 `40 × 48` 单元有硬 Alpha、非空内容及同一脚点基线；重复使用相同
 输入得到字节一致输出。
+
+## 阶段 3B：人物专属动作派生
+
+本阶段仍不引入外部素材。`scripts/prepare_stage3b_assets.py` 读取已入库的阿栀与四位村民
+原创图集，沿用阶段 3A 的脚点、硬 Alpha 与举手姿态，并添加最小的原创硬像素道具簇：三色布条、
+面包篮、铃绳、木槌与药草。角色设计、地图、剧情与存档均未改动。
+
+源图与运行时文件：
+
+- `characters/chr_azhi_walk_4dir_4f_v02.png` →
+  `characters/chr_azhi_ribbons_4dir_2f_v01.png`（`80 × 192`，四方向 × 两帧）。
+- `characters/chr_villagers_idle_4dir_v02.png` →
+  `characters/chr_villagers_work_4dir_2f_v01.png`（`320 × 192`，四人各连续两列）。
+
+```bash
+env UV_CACHE_DIR="$PWD/.uv-cache" uv run --python 3.12 python scripts/prepare_stage3b_assets.py \
+  --azhi assets/images/game/v0.4/characters/chr_azhi_walk_4dir_4f_v02.png \
+  --villagers assets/images/game/v0.4/characters/chr_villagers_idle_4dir_v02.png \
+  --azhi-output assets/images/game/v0.4/characters/chr_azhi_ribbons_4dir_2f_v01.png \
+  --villagers-output assets/images/game/v0.4/characters/chr_villagers_work_4dir_2f_v01.png
+```
+
+相同输入会生成字节一致的 PNG；脚本会验证所有单元的硬 Alpha、非空内容与统一 `y=46` 脚点。

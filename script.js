@@ -1801,6 +1801,27 @@
     return line && dialogueSpeakerIds[line.speaker] ? dialogueSpeakerIds[line.speaker] : null;
   }
 
+  function exclusiveActionFor(npc) {
+    if (!npc || state.dialogueOpen) {
+      return null;
+    }
+
+    switch (npc.id) {
+      case "azhi":
+        return state.currentDayIndex >= 5 ? "ribbons" : null;
+      case "linmai":
+        return "bread";
+      case "shenyan":
+        return state.currentDayIndex >= 3 ? "bell-rope" : null;
+      case "xuhuai":
+        return state.currentDayIndex >= 3 ? "mallet" : null;
+      case "qin":
+        return state.currentDayIndex >= 4 ? "herbs" : null;
+      default:
+        return null;
+    }
+  }
+
   function advanceDialogue() {
     if (!state.dialogueOpen) {
       return;
@@ -5806,6 +5827,9 @@
       if (entity.talking && artV04 && artV04.get("azhiTalk")) {
         return { key: "azhiTalk", frame: animationFrame(now, 260, 2, 0.5) };
       }
+      if (entity.action === "ribbons" && artV04 && artV04.get("azhiRibbons")) {
+        return { key: "azhiRibbons", frame: animationFrame(now, 360, 2, 0.5) };
+      }
       return { key: "azhi", frame: characterAnimationFrame(entity, now) };
     }
 
@@ -5813,6 +5837,8 @@
       const key =
         entity.talking && artV04 && artV04.get("villagersTalk")
           ? "villagersTalk"
+          : entity.action && artV04 && artV04.get("villagersWork")
+            ? "villagersWork"
           : artV04 && artV04.get("villagersIdle")
             ? "villagersIdle"
             : "villagers";
@@ -5821,7 +5847,7 @@
       if (!Number.isInteger(baseFrame)) {
         return null;
       }
-      const frameMs = key === "villagersTalk" ? 260 : 720;
+      const frameMs = key === "villagersTalk" ? 260 : key === "villagersWork" ? 360 : 720;
       return {
         key,
         frame: key === "villagers" ? baseFrame : baseFrame + animationFrame(now, frameMs, 2),
@@ -6289,30 +6315,35 @@
         drawX: npcs.qin.x,
         drawY: npcs.qin.y,
         talking: dialogueSpeakerId === "qin",
+        action: exclusiveActionFor(npcs.qin),
       },
       {
         ...npcs.linmai,
         drawX: npcs.linmai.x,
         drawY: npcs.linmai.y,
         talking: dialogueSpeakerId === "linmai",
+        action: exclusiveActionFor(npcs.linmai),
       },
       {
         ...npcs.xuhuai,
         drawX: npcs.xuhuai.x,
         drawY: npcs.xuhuai.y,
         talking: dialogueSpeakerId === "xuhuai",
+        action: exclusiveActionFor(npcs.xuhuai),
       },
       {
         ...npcs.shenyan,
         drawX: npcs.shenyan.x,
         drawY: npcs.shenyan.y,
         talking: dialogueSpeakerId === "shenyan",
+        action: exclusiveActionFor(npcs.shenyan),
       },
       {
         ...npcs.azhi,
         drawX: npcs.azhi.x,
         drawY: npcs.azhi.y,
         talking: dialogueSpeakerId === "azhi",
+        action: exclusiveActionFor(npcs.azhi),
       },
       {
         palette: "player",

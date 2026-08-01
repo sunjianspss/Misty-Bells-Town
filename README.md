@@ -35,7 +35,7 @@
 - 推送 `main` 会更新在线试玩；推送 `vX.Y.Z` 标签会自动生成 GitHub Release
 - 具体发布步骤见 [`docs/releasing.md`](docs/releasing.md)
 
-## v0.4 阶段 0–3A：桥边样片、核心美术与人物基础动画
+## v0.4 阶段 0–3B：桥边样片、核心美术与人物动画
 
 - 已完成一页 [`v0.4 视觉规范与命名规则`](docs/visual-spec-v0.4.md)。
 - 标题页新增“体验 v0.4 桥边样片”，会直接进入春 6 三盏桥灯试亮后的黄昏；样片期间暂停章节跳转与跨日，不会覆盖正式存档。
@@ -61,6 +61,10 @@
   仍可完整移动、互动与通关。
 - [`scripts/prepare_stage3a_assets.py`](scripts/prepare_stage3a_assets.py) 可确定性生成 Stage 3A
   运行时图集，并验证所有单元的硬 Alpha 与脚点基线。
+- 阶段 3B 新增低频专属动作：阿栀整理布条、林麦递面包篮、沈砚试铃绳、许槐检修、秦婆婆
+  查看药草；它们只读取既有日期与角色 ID，交谈姿态优先且不影响剧情推进。
+- [`scripts/prepare_stage3b_assets.py`](scripts/prepare_stage3b_assets.py) 可确定性生成两张专属动作
+  图集，并在写入后验证硬 Alpha 与统一脚点。
 - 六张阶段 2C 图集可由 [`scripts/prepare_stage2c_assets.py`](scripts/prepare_stage2c_assets.py)
   从入库源图字节级复现；每项加载失败时只回退对应旧绘制。
 - 阶段 2D 已把正式七天流程的草坪补成细草底纹、跨格明暗草团和低矮杂草 / 碎花三层；
