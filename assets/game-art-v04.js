@@ -31,6 +31,21 @@
       cellHeight: 32,
       rows: { grass: 0, path: 1, plaza: 2, water: 3 },
     },
+    grassBase: {
+      src: "assets/images/game/v0.4/tiles/tile_grass_base_4x2_v01.png",
+      cellWidth: 32,
+      cellHeight: 32,
+    },
+    grassDetails: {
+      src: "assets/images/game/v0.4/tiles/tile_grass_details_4x4_v01.png",
+      cellWidth: 32,
+      cellHeight: 32,
+    },
+    grassPatches: {
+      src: "assets/images/game/v0.4/tiles/tile_grass_patches_4x2_v01.png",
+      cellWidth: 64,
+      cellHeight: 64,
+    },
     riverbank: {
       src: "assets/images/game/v0.4/tiles/tile_riverbank_overlay_4x2_v01.png",
       cellWidth: 32,

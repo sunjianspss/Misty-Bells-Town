@@ -35,7 +35,7 @@
 - 推送 `main` 会更新在线试玩；推送 `vX.Y.Z` 标签会自动生成 GitHub Release
 - 具体发布步骤见 [`docs/releasing.md`](docs/releasing.md)
 
-## v0.4 阶段 0–2C：桥边样片与核心静态美术重制
+## v0.4 阶段 0–2D：桥边样片与核心静态美术重制
 
 - 已完成一页 [`v0.4 视觉规范与命名规则`](docs/visual-spec-v0.4.md)。
 - 标题页新增“体验 v0.4 桥边样片”，会直接进入春 6 三盏桥灯试亮后的黄昏；样片期间暂停章节跳转与跨日，不会覆盖正式存档。
@@ -59,6 +59,11 @@
   待机、转身、交谈与专属动作仍留到阶段 3。
 - 六张阶段 2C 图集可由 [`scripts/prepare_stage2c_assets.py`](scripts/prepare_stage2c_assets.py)
   从入库源图字节级复现；每项加载失败时只回退对应旧绘制。
+- 阶段 2D 已把正式七天流程的草坪补成细草底纹、跨格明暗草团和低矮杂草 / 碎花三层；
+  所有散布由地图坐标固定，不会在移动时闪烁或改变。
+- NPC、任务道具、道路与桥头周围保留静态清晰区；三张新图集可由
+  [`scripts/prepare_stage2d_assets.py`](scripts/prepare_stage2d_assets.py) 从现有原创素材
+  字节级复现，任一层失败都不会影响剧情、碰撞或操作。
 - 60 FPS 节流采用时间余数校正，在 90 / 120 / 144Hz 刷新率下不会系统性降为 45 / 48 FPS。
 - 生成提示、素材来源和运行时文件清单见
   [`assets/images/game/v0.4/ART-PROMPTS.md`](assets/images/game/v0.4/ART-PROMPTS.md)。

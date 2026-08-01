@@ -4399,6 +4399,18 @@
     return hash & 3;
   }
 
+  function grassHash(x, y, salt = 0) {
+    let hash =
+      Math.imul(x + 17 + salt, 0x9e3779b1) ^
+      Math.imul(y + 31 - salt, 0x85ebca77);
+    hash ^= hash >>> 16;
+    hash = Math.imul(hash, 0x7feb352d);
+    hash ^= hash >>> 15;
+    hash = Math.imul(hash, 0x846ca68b);
+    hash ^= hash >>> 16;
+    return hash >>> 0;
+  }
+
   function drawTerrainBaseTile(material, x, y) {
     if (!artV04) {
       return false;
@@ -4419,6 +4431,268 @@
       TILE,
       TILE,
     );
+  }
+
+  function drawGrassBaseTile(x, y) {
+    const macroFamily =
+      grassHash(Math.floor((x + 1) / 2), Math.floor((y + 1) / 2), 43) % 4;
+    const variant = grassHash(x, y, 71) & 1;
+    const row = macroFamily >= 2 ? 1 : 0;
+    const column = (macroFamily % 2) * 2 + variant;
+    if (
+      drawArtCell(
+        "grassBase",
+        row,
+        column,
+        x * TILE,
+        y * TILE,
+        TILE,
+        TILE,
+      )
+    ) {
+      return true;
+    }
+    return drawTerrainBaseTile("grass", x, y);
+  }
+
+  function isGrassTile(x, y) {
+    if (x < 0 || y < 0 || x >= MAP_W || y >= MAP_H) {
+      return false;
+    }
+    const key = tileKey(x, y);
+    return (
+      !world.water.has(key) &&
+      !world.square.has(key) &&
+      !world.path.has(key)
+    );
+  }
+
+  function addGrassDetailClearZone(set, centerX, centerY, radius = 1) {
+    for (let y = centerY - radius; y <= centerY + radius; y += 1) {
+      for (let x = centerX - radius; x <= centerX + radius; x += 1) {
+        if (x >= 0 && y >= 0 && x < MAP_W && y < MAP_H) {
+          set.add(tileKey(x, y));
+        }
+      }
+    }
+  }
+
+  function buildGrassDetailClearTiles() {
+    const clear = makeSet();
+    Object.values(dayLayouts).forEach((layout) => {
+      Object.values(layout).forEach((npc) => {
+        addGrassDetailClearZone(clear, npc.x, npc.y);
+      });
+    });
+    [
+      [3, 5],
+      [8, 4],
+      [9, 7],
+      [1, 12],
+      [10, 2],
+      [11, 9],
+      [12, 9],
+      [14, 9],
+      [11, 10],
+      [12, 10],
+      [13, 10],
+      [14, 10],
+    ].forEach(([x, y]) => addGrassDetailClearZone(clear, x, y));
+    return clear;
+  }
+
+  function adjacentToTravelSurface(x, y) {
+    for (let offsetY = -1; offsetY <= 1; offsetY += 1) {
+      for (let offsetX = -1; offsetX <= 1; offsetX += 1) {
+        if (offsetX === 0 && offsetY === 0) {
+          continue;
+        }
+        const key = tileKey(x + offsetX, y + offsetY);
+        if (world.path.has(key) || world.square.has(key)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  function nearHeroFlower(x, y) {
+    return world.flowers.some(
+      (flower) =>
+        Math.abs(flower.x - x) <= 1 && Math.abs(flower.y - y) <= 1,
+    );
+  }
+
+  let grassPatchPlacementsCache = null;
+
+  function buildGrassPatchPlacements() {
+    const clearTiles = buildGrassDetailClearTiles();
+    const heroFlowerTiles = new Set(
+      world.flowers.map((flower) => tileKey(flower.x, flower.y)),
+    );
+    const placements = [];
+    for (let y = 0; y < MAP_H - 1; y += 2) {
+      for (let x = 0; x < MAP_W - 1; x += 2) {
+        const coveredTiles = [
+          [x, y],
+          [x + 1, y],
+          [x, y + 1],
+          [x + 1, y + 1],
+        ];
+        if (
+          coveredTiles.some(([tileX, tileY]) => {
+            const key = tileKey(tileX, tileY);
+            return (
+              !isGrassTile(tileX, tileY) ||
+              world.solids.has(key) ||
+              clearTiles.has(key) ||
+              heroFlowerTiles.has(key)
+            );
+          })
+        ) {
+          continue;
+        }
+        const highDensity =
+          (x >= 8 && y <= 6) || (x <= 4 && y <= 4);
+        const density = highDensity ? 78 : y >= 8 ? 50 : 62;
+        if (grassHash(x / 2, y / 2, 229) % 100 >= density) {
+          continue;
+        }
+        placements.push({
+          x,
+          y,
+          patchIndex: grassHash(x / 2, y / 2, 241) % 8,
+        });
+      }
+    }
+    return placements;
+  }
+
+  function drawGrassPatches() {
+    if (!artV04 || !artV04.get("grassPatches")) {
+      return;
+    }
+    if (!grassPatchPlacementsCache) {
+      grassPatchPlacementsCache = buildGrassPatchPlacements();
+    }
+    grassPatchPlacementsCache.forEach((placement) => {
+      drawArtCell(
+        "grassPatches",
+        Math.floor(placement.patchIndex / 4),
+        placement.patchIndex % 4,
+        placement.x * TILE,
+        placement.y * TILE,
+        TILE * 2,
+        TILE * 2,
+      );
+    });
+  }
+
+  let grassDetailPlacementsCache = null;
+
+  function buildGrassDetailPlacements() {
+    const clearTiles = buildGrassDetailClearTiles();
+    const heroFlowerTiles = new Set(
+      world.flowers.map((flower) => tileKey(flower.x, flower.y)),
+    );
+    const lowDetails = [0, 0, 1, 1, 2, 4, 5, 6, 7, 14, 14];
+    const edgeDetails = [0, 1, 2, 3, 4, 5, 6, 7, 14, 14];
+    const strongDetails = [8, 9, 10, 11, 12, 13, 15];
+    const placements = [];
+
+    for (let y = 0; y < MAP_H; y += 1) {
+      for (let x = 0; x < MAP_W; x += 1) {
+        const key = tileKey(x, y);
+        if (
+          !isGrassTile(x, y) ||
+          world.solids.has(key) ||
+          heroFlowerTiles.has(key)
+        ) {
+          continue;
+        }
+
+        const macroX = Math.floor(x / 2);
+        const macroY = Math.floor(y / 2);
+        const macroSlot = (x & 1) + (y & 1) * 2;
+        const reservedBaseSlot = grassHash(macroX, macroY, 113) & 3;
+        if (macroSlot === reservedBaseSlot) {
+          continue;
+        }
+
+        const highDensity =
+          (x >= 9 && y <= 7) || (x <= 5 && y <= 5);
+        const mediumDensity =
+          (x <= 5 && y >= 5 && y <= 8) ||
+          (x >= 3 && x <= 11 && y >= 9);
+        const travelEdge = adjacentToTravelSurface(x, y);
+        const clear = clearTiles.has(key);
+        const density = clear
+          ? 15
+          : highDensity
+            ? 78
+            : mediumDensity
+              ? 58
+              : travelEdge
+                ? 64
+                : 62;
+        if (grassHash(x, y, 131) % 100 >= density) {
+          continue;
+        }
+
+        const strongChance = highDensity ? 70 : mediumDensity ? 55 : 60;
+        const strongSlot = grassHash(macroX, macroY, 167) & 3;
+        const allowStrong =
+          !clear &&
+          !travelEdge &&
+          !nearHeroFlower(x, y) &&
+          macroSlot === strongSlot &&
+          grassHash(x, y, 173) % 100 < strongChance;
+        const pool = allowStrong
+          ? strongDetails
+          : travelEdge
+            ? edgeDetails
+            : lowDetails;
+        let detailIndex = pool[grassHash(x, y, 191) % pool.length];
+        const duplicateNearby = placements.some(
+          (placement) =>
+            placement.detailIndex === detailIndex &&
+            Math.abs(placement.x - x) + Math.abs(placement.y - y) <= 2,
+        );
+        if (duplicateNearby) {
+          const offset = 1 + (grassHash(x, y, 211) & 1);
+          detailIndex =
+            pool[(pool.indexOf(detailIndex) + offset) % pool.length];
+        }
+        placements.push({
+          x,
+          y,
+          detailIndex,
+        });
+      }
+    }
+    return placements;
+  }
+
+  function drawGrassDetails() {
+    if (!artV04 || !artV04.get("grassDetails")) {
+      return;
+    }
+    if (!grassDetailPlacementsCache) {
+      grassDetailPlacementsCache = buildGrassDetailPlacements();
+    }
+    grassDetailPlacementsCache.forEach((placement) => {
+      const row = Math.floor(placement.detailIndex / 4);
+      const column = placement.detailIndex % 4;
+      drawArtCell(
+        "grassDetails",
+        row,
+        column,
+        placement.x * TILE,
+        placement.y * TILE,
+        TILE,
+        TILE,
+      );
+    });
   }
 
   function drawRiverbankOverlay(x, y) {
@@ -4607,7 +4881,7 @@
           continue;
         }
 
-        if (!drawTerrainBaseTile("grass", x, y)) {
+        if (!drawGrassBaseTile(x, y)) {
           const palette = paletteForTerrain(x, y);
           drawTile(x, y, palette.base);
           ctx.fillStyle = palette.dark;
@@ -5923,6 +6197,8 @@
       drawBridgeDuskWaterFx(now);
     } else {
       drawTerrain(now);
+      drawGrassPatches();
+      drawGrassDetails();
       drawFlowers();
       drawReeds();
       drawTree(0, 9, now);

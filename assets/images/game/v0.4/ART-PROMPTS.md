@@ -142,6 +142,49 @@ text, logo, watermark, painterly blur, antialiasing or baked dusk lighting.
 每行四个确定性变体。任意同材质变体横向或纵向相邻时外沿像素一致；素材加载失败时，
 正式七天流程继续回退原程序绘制。
 
+## 阶段 2D 模块化草坪补完
+
+本阶段的目标不是再生成一张整景图，而是把阶段 1B 样片的“三尺度草坪组织”拆回正式
+`18 × 14` 地图可复用的 PNG 图集：单格微纹理、跨 `2 × 2` 格的不规则明暗草团，以及
+低矮杂草 / 碎花 / 裸土覆盖。
+
+素材模式：`deterministic remix / full render`。本轮运行环境没有暴露 Codex 内置
+`image_gen` 调用，因此没有新增图像生成提示词；处理器只使用仓库中已经确认原创的素材：
+
+- `backgrounds/scene_bridge_dusk_bg_576x448_v01.png`：只提取草地的值域、冷暖关系与
+  不规则宏观明暗，不把整景或建筑裁进正式地图。
+- `tiles/tile_terrain_base_4x4_v01.png`：提供可环绕的细草微纹理和小块裸土材质。
+- `tiles/tile_flora_static_4x2_v01.png`：提供原创花簇与芦苇形状，缩小后重排成低矮地表
+  细节；原图仍作为正式流程中的主花丛 / 芦苇使用。
+
+没有使用封面图、外部素材、截图像素复制或运行时程序绘画。`prepare_stage2d_assets.py`
+在构建阶段完成调色、跨格有机遮罩、硬 Alpha、无抖动减色、安全边和尺寸校验；运行时
+只绘制透明 PNG。
+
+最终文件：
+
+- `tiles/tile_grass_base_4x2_v01.png`：`128 × 64`，单元 `32 × 32`，八个平均亮度接近的
+  冷暖 / 明暗微纹理变体。
+- `tiles/tile_grass_patches_4x2_v01.png`：`256 × 128`，单元 `64 × 64`，八个低对比、
+  硬 Alpha 的跨格不规则草团。
+- `tiles/tile_grass_details_4x4_v01.png`：`128 × 128`，单元 `32 × 32`，苔影 / 地衣 /
+  裸土、杂草、小型碎花和混合过渡格。
+
+可复现命令：
+
+```bash
+uv run --python 3.12 python scripts/prepare_stage2d_assets.py \
+  --scene assets/images/game/v0.4/backgrounds/scene_bridge_dusk_bg_576x448_v01.png \
+  --flora assets/images/game/v0.4/tiles/tile_flora_static_4x2_v01.png \
+  --terrain assets/images/game/v0.4/tiles/tile_terrain_base_4x4_v01.png \
+  --grass-output assets/images/game/v0.4/tiles/tile_grass_base_4x2_v01.png \
+  --patches-output assets/images/game/v0.4/tiles/tile_grass_patches_4x2_v01.png \
+  --details-output assets/images/game/v0.4/tiles/tile_grass_details_4x4_v01.png
+```
+
+相同输入与脚本重复运行得到字节一致 PNG。草地底纹加载失败时先回退阶段 2A 草地，再
+回退旧程序绘制；跨格草团或细节图集失败时只省略该层。
+
 ## 阶段 2B 地标、剧情道具与河岸
 
 输入参考：
