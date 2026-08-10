@@ -2310,6 +2310,22 @@
     return Boolean(getNpcAt(x, y));
   }
 
+  function showBridgeBlockedHint(x, y) {
+    if (!playerNearBridge()) {
+      return;
+    }
+
+    const npc = getNpcAt(x, y);
+    if (npc) {
+      showToast(`${npc.name}站在前面，按 E 交谈或换个方向。`);
+      return;
+    }
+
+    if (world.water.has(tileKey(x, y)) && !world.bridge.has(tileKey(x, y))) {
+      showToast("桥灯挂在栏边，不占桥面；请沿木板左右走。");
+    }
+  }
+
   function attemptMove(dx, dy) {
     if (isModalOpen() || state.dialogueOpen || state.noteOpen || player.moving || state.dayComplete) {
       return;
@@ -2321,6 +2337,7 @@
     const nextX = player.x + dx;
     const nextY = player.y + dy;
     if (isBlocked(nextX, nextY)) {
+      showBridgeBlockedHint(nextX, nextY);
       return;
     }
 
@@ -4885,7 +4902,7 @@
       }
 
       const frame = animationFrame(now, 230, 4, index * 0.75);
-      const reflectionX = lantern.tileX * TILE - 4;
+      const reflectionX = lantern.drawX * TILE - 4;
       const reflectionY = (11 + index * 0.45) * TILE;
       if (!drawArtCell("bridgeFx", 3, frame, reflectionX, reflectionY, 16, 16)) {
         ctx.fillStyle = "rgba(244, 196, 103, 0.64)";
@@ -5477,6 +5494,8 @@
         done: state.lanternLeftDoneDay6,
         tileX: 11,
         tileY: 9,
+        drawX: 11,
+        drawY: 9,
       },
       {
         active:
@@ -5484,6 +5503,8 @@
         done: state.lanternCenterDoneDay6,
         tileX: 12,
         tileY: 10,
+        drawX: 12,
+        drawY: 9,
       },
       {
         active:
@@ -5491,6 +5512,8 @@
         done: state.lanternRightDoneDay6,
         tileX: 14,
         tileY: 9,
+        drawX: 15,
+        drawY: 9,
       },
     ];
   }
@@ -5682,8 +5705,8 @@
             ? 2 + animationFrame(now, 220, 2, index * 0.5)
             : 1
           : 0;
-        const x = lantern.tileX * TILE;
-        const y = lantern.tileY * TILE;
+        const x = lantern.drawX * TILE;
+        const y = lantern.drawY * TILE;
         if (!drawArtCell("bridgeFx", 2, frame, x, y, 16, 16)) {
           ctx.fillStyle = "#56372d";
           ctx.fillRect(x + 6.5, y + 2, 3, 8);
@@ -6344,8 +6367,8 @@
 
       const flicker = animationFrame(now, 190, 4, index * 0.5);
       const pulse = flicker === 1 ? 1 : 0;
-      const cx = lantern.tileX * TILE + 8;
-      const cy = lantern.tileY * TILE + 8;
+      const cx = (lantern.drawX ?? lantern.tileX) * TILE + 8;
+      const cy = (lantern.drawY ?? lantern.tileY) * TILE + 8;
       ctx.fillStyle = "rgba(244, 196, 103, 0.085)";
       fillPixelGlow(cx, cy, 22 + pulse * 2, 16 + pulse * 2, 2);
       ctx.fillStyle = "rgba(244, 196, 103, 0.17)";

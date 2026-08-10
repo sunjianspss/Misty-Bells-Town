@@ -241,3 +241,32 @@ final result: passed
 - P2：已修复两栋房屋集中在地图底部、屋顶固定覆盖门前人物的问题。
 
 final result: passed
+
+## 桥灯通行与阻挡反馈修正
+
+### 根因与修复
+
+- 灯笼从未加入 `world.solids`；误判来自桥心灯绘制在唯一可走的桥面格、右侧灯与沈砚脚点
+  靠得过近，同时桥外水格与 NPC 阻挡没有反馈。
+- 桥心灯改画到北侧桥栏，右侧灯改画到桥端栏侧；`lantern-left`、`lantern-center`、
+  `lantern-right` 的互动格与剧情状态保持不变。
+- 玩家在桥边撞到 NPC 时提示交谈或绕行，撞到桥外水面时提示沿木板左右走；没有扩大桥面、
+  删除水体碰撞或允许穿过 NPC。
+
+### 交互与视觉验证
+
+- `output/playwright/stage4a2-bridge-lantern-layout.png`：三盏灯均位于桥栏侧，桥面中央没有
+  灯笼实体视觉。
+- `output/playwright/stage4a2-bridge-lantern-passage.png`：玩家在春 6 傍晚站到桥面最右格，
+  桥栏外水面提示清楚可见。
+- Playwright 实走坐标依次为 `(11,10) → (12,10) → (13,10) → (14,10)`；向沈砚所在格
+  移动时保持 `(13,10)`，向桥外水格移动时保持 `(14,10)`。
+- 浏览器控制台 `0 error / 0 warning`；`node --check script.js` 与 `git diff --check` 通过。
+
+### 最终发现
+
+- P0：无。
+- P1：无。
+- P2：灯笼假碰撞已修复。
+
+final result: passed
