@@ -159,8 +159,8 @@
       { x: 16, y: 8 },
     ],
     lamps: [
-      { x: 11, y: 9 },
-      { x: 14, y: 9 },
+      { x: 11, y: 9, drawX: 11, drawY: 8.5 },
+      { x: 14, y: 9, drawX: 15, drawY: 8.5 },
     ],
   };
 
@@ -195,6 +195,7 @@
   addLine(world.path, 7, 4, 7, 5);
   addRect(world.square, 6, 5, 4, 3);
   addRect(world.water, 12, 8, 6, 6);
+  addLine(world.bridge, 11, 9, 14, 9);
   addLine(world.bridge, 11, 10, 14, 10);
   addRect(world.solids, 1, 2, 4, 3);
   world.solids.add(tileKey(1, 12));
@@ -5495,7 +5496,7 @@
         tileX: 11,
         tileY: 9,
         drawX: 11,
-        drawY: 9,
+        drawY: 8.5,
       },
       {
         active:
@@ -5504,7 +5505,7 @@
         tileX: 12,
         tileY: 10,
         drawX: 12,
-        drawY: 9,
+        drawY: 8.5,
       },
       {
         active:
@@ -5513,7 +5514,7 @@
         tileX: 14,
         tileY: 9,
         drawX: 15,
-        drawY: 9,
+        drawY: 8.5,
       },
     ];
   }
@@ -5533,8 +5534,8 @@
     }
 
     world.lamps.forEach((lamp, index) => {
-      const px = lamp.x * TILE;
-      const py = lamp.y * TILE;
+      const px = (lamp.drawX ?? lamp.x) * TILE;
+      const py = (lamp.drawY ?? lamp.y) * TILE;
       const lit = state.timeSlot === "傍晚" || state.timeSlot === "夜晚";
       const frame = lit ? 2 + animationFrame(now, 210, 2, index * 0.5) : 0;
       if (
@@ -6356,6 +6357,8 @@
             done: true,
             tileX: lamp.x,
             tileY: lamp.y,
+            drawX: lamp.drawX,
+            drawY: lamp.drawY,
           }));
 
     ctx.save();
