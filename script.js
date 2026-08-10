@@ -164,8 +164,28 @@
     ],
   };
 
+  const villageHouses = [
+    {
+      id: "south-west-house",
+      x: 3,
+      y: 9,
+      column: 0,
+      footprint: { x: 4, y: 12, width: 3, height: 2 },
+    },
+    {
+      id: "south-east-house",
+      x: 8,
+      y: 9,
+      column: 1,
+      footprint: { x: 9, y: 12, width: 3, height: 2 },
+    },
+  ];
+  const villageHouseSolids = makeSet();
+
   addLine(world.path, 2, 13, 2, 8);
   addLine(world.path, 2, 8, 11, 8);
+  addLine(world.path, 2, 11, 11, 11);
+  addLine(world.path, 7, 8, 7, 11);
   addLine(world.path, 11, 8, 11, 10);
   addLine(world.path, 11, 10, 14, 10);
   addLine(world.path, 4, 6, 6, 6);
@@ -181,6 +201,15 @@
   world.solids.add(tileKey(0, 10));
   world.solids.add(tileKey(1, 9));
   world.solids.add(tileKey(1, 10));
+  villageHouses.forEach((house) => {
+    addRect(
+      villageHouseSolids,
+      house.footprint.x,
+      house.footprint.y,
+      house.footprint.width,
+      house.footprint.height,
+    );
+  });
 
   const npcBase = {
     azhi: { id: "azhi", name: "阿栀", palette: "azhi" },
@@ -2271,7 +2300,8 @@
     if (world.water.has(tileKey(x, y)) && !world.bridge.has(tileKey(x, y))) {
       return true;
     }
-    if (world.solids.has(tileKey(x, y))) {
+    const key = tileKey(x, y);
+    if (world.solids.has(key) || villageHouseSolids.has(key)) {
       return true;
     }
     return Boolean(getNpcAt(x, y));
@@ -4571,6 +4601,7 @@
             return (
               !isGrassTile(tileX, tileY) ||
               world.solids.has(key) ||
+              villageHouseSolids.has(key) ||
               clearTiles.has(key)
             );
           })
@@ -4638,6 +4669,7 @@
         if (
           !isGrassTile(x, y) ||
           world.solids.has(key) ||
+          villageHouseSolids.has(key) ||
           heroFlowerTiles.has(key) ||
           clearTiles.has(key)
         ) {
@@ -5124,6 +5156,99 @@
     }
     const herbColumn = state.seedFoundDay4 ? 1 : 0;
     drawArtCell("herbShed", 1, herbColumn, 136, 8, 48, 40);
+  }
+
+  function drawVillageHouseFallback(house, foregroundOnly = false) {
+    const px = house.x * TILE;
+    const py = house.y * TILE;
+    const eastHouse = house.column === 1;
+
+    if (!foregroundOnly) {
+      ctx.fillStyle = eastHouse ? "#8aa07b" : "#e3d3b2";
+      ctx.fillRect(px + 10, py + 31, 44, 28);
+      ctx.fillStyle = "#56372d";
+      ctx.fillRect(px + 9, py + 31, 3, 29);
+      ctx.fillRect(px + 52, py + 31, 3, 29);
+      ctx.fillRect(px + 30, py + 32, 3, 27);
+      ctx.fillStyle = "#95603e";
+      ctx.fillRect(px + 12, py + 35, 40, 2);
+
+      const doorX = eastHouse ? px + 36 : px + 31;
+      const windowX = eastHouse ? px + 18 : px + 16;
+      ctx.fillStyle = "#4a3029";
+      ctx.fillRect(doorX, py + 41, 12, 18);
+      ctx.fillStyle = "#8a5637";
+      ctx.fillRect(doorX + 2, py + 43, 8, 14);
+      ctx.fillStyle = "#56372d";
+      ctx.fillRect(windowX - 2, py + 40, 14, 12);
+      ctx.fillStyle = "#f4c467";
+      ctx.fillRect(windowX, py + 42, 10, 7);
+      ctx.fillStyle = "#9f663f";
+      ctx.fillRect(windowX + 4.5, py + 42, 1, 7);
+      ctx.fillRect(windowX, py + 45, 10, 1);
+      ctx.fillStyle = "#6f665b";
+      ctx.fillRect(px + 8, py + 58, 48, 4);
+      ctx.fillStyle = "#a69a83";
+      ctx.fillRect(px + 10, py + 58, 12, 1);
+      ctx.fillRect(px + 38, py + 58, 14, 1);
+    }
+
+    const roofRows = eastHouse ? 14 : 12;
+    for (let row = 0; row < roofRows; row += 1) {
+      const inset = Math.max(3, 28 - row * 2);
+      ctx.fillStyle = row % 3 === 0 ? "#313952" : "#3d4663";
+      ctx.fillRect(px + inset, py + 5 + row * 2, 64 - inset * 2, 2);
+      if (row > 3 && row % 2 === 0) {
+        ctx.fillStyle = "#59617b";
+        ctx.fillRect(px + inset + 3, py + 5 + row * 2, 7, 0.5);
+      }
+    }
+    ctx.fillStyle = "#56372d";
+    ctx.fillRect(px + 4, py + 31, 56, 2);
+    ctx.fillStyle = "#95603e";
+    ctx.fillRect(px + 8, py + 32, 48, 1);
+    if (!eastHouse) {
+      ctx.fillStyle = "#75685c";
+      ctx.fillRect(px + 13, py + 5, 7, 15);
+      ctx.fillStyle = "#a69a83";
+      ctx.fillRect(px + 12, py + 4, 9, 3);
+    }
+  }
+
+  function drawVillageHouses() {
+    villageHouses.forEach((house) => {
+      if (
+        !drawArtCell(
+          "villageHouses",
+          0,
+          house.column,
+          house.x * TILE,
+          house.y * TILE,
+          TILE * 4,
+          TILE * 4,
+        )
+      ) {
+        drawVillageHouseFallback(house);
+      }
+    });
+  }
+
+  function drawVillageHouseForegrounds() {
+    villageHouses.forEach((house) => {
+      if (
+        !drawArtCell(
+          "villageHouses",
+          1,
+          house.column,
+          house.x * TILE,
+          house.y * TILE,
+          TILE * 4,
+          TILE * 4,
+        )
+      ) {
+        drawVillageHouseFallback(house, true);
+      }
+    });
   }
 
   function drawNoticeBoard() {
@@ -6396,6 +6521,7 @@
       drawNoticeBoard();
       drawTable();
       drawGate();
+      drawVillageHouses();
       drawBridgeBackRail();
       drawLamps(now);
       drawFestivalPrep(now);
@@ -6458,6 +6584,7 @@
       drawBridgeDuskSceneImage(duskLayers.foreground);
       drawBridgeDuskAtmosphere(now);
     } else {
+      drawVillageHouseForegrounds();
       drawTreeForeground(0, 9);
       drawBakeryForeground();
       drawHerbShedForeground();

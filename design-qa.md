@@ -202,3 +202,40 @@
 - P2：无。
 
 final result: passed
+
+## 阶段 4A 南街民居与街巷
+
+### 验证范围
+
+- 保留 `18 × 14` 地图、全部既有固体格、五位 NPC / 互动坐标、七天剧情、任务状态、存档格式
+  和键盘 / 触屏操作；只在南侧无任务草地增加两栋房屋、道路材质与独立房屋占地碰撞。
+- 南街东西向路段连接村口纵路与桥头纵路，中段支路回接原主路；没有新增室内地图、村民、
+  对白、任务或存档字段。
+
+### 素材与技术验证
+
+- `prop_village_houses_layers_2x2_v01.png` 为 `256 × 256` RGBA PNG，严格 `2 × 2`、
+  `128 × 128` 单元与硬 Alpha；上行为两栋房屋基底，下行为对应屋顶前景。
+- 品红底原创源图由内置图像生成工具生成，透明中间稿通过严格近色阈值去背；未使用外部素材、
+  封面裁切、截图复制、文字或水印。
+- `node --check script.js`、`node --check assets/game-art-v04.js`、Python 编译检查与
+  `git diff --check`：通过。
+- `prepare_stage4a_village_assets.py` 重建图集后与工作区 PNG 逐字节一致。
+
+### 交互与响应式验证
+
+- 桌面证据：`output/playwright/stage4a-south-street-desktop.png`；两栋民居、南街与桥头关系清楚，
+  原任务标记、人物和水岸未被遮挡。
+- 手机证据：`output/playwright/stage4a-south-street-mobile.png`；`390 × 844` 视口继续使用
+  `288px` 游戏画布，房屋像素边缘清楚，无横向溢出。
+- 玩家从出生点连续向右移动时，第一步到达房屋外侧、第二步被墙体碰撞挡住；无法穿墙，返回
+  村口纵路的路线保持开放。
+- 桌面 / 手机同一真实浏览器会话的控制台为 `0 error / 0 warning`。
+
+### 最终发现
+
+- P0：无。
+- P1：无。
+- P2：无。
+
+final result: passed

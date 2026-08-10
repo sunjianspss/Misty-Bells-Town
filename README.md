@@ -35,7 +35,7 @@
 - 推送 `main` 会更新在线试玩；推送 `vX.Y.Z` 标签会自动生成 GitHub Release
 - 具体发布步骤见 [`docs/releasing.md`](docs/releasing.md)
 
-## v0.4 阶段 0–3C：桥边样片、核心美术与完整动画
+## v0.4 阶段 0–4A：桥边样片、核心美术、动画与南街村落
 
 - 已完成一页 [`v0.4 视觉规范与命名规则`](docs/visual-spec-v0.4.md)。
 - 标题页新增“体验 v0.4 桥边样片”，会直接进入春 6 三盏桥灯试亮后的黄昏；样片期间暂停章节跳转与跨日，不会覆盖正式存档。
@@ -70,6 +70,10 @@
   两帧围观人群和低密度花瓣流。
 - [`scripts/prepare_stage3c_assets.py`](scripts/prepare_stage3c_assets.py) 可确定性生成两帧集会人群
   与雨水 / 花瓣特效图集；减少动态效果路径会固定全部环境动画首帧。
+- 阶段 4A 在地图南侧补入两栋原创分层像素民居，并用南街横路与纵向支路连接村口、主路
+  和桥头；没有新增地图、村民、对白、任务或存档字段。
+- [`scripts/prepare_stage4a_village_assets.py`](scripts/prepare_stage4a_village_assets.py) 将原创
+  品红底民居源稿规整为 `2 × 2` 基底 / 屋檐前景图集，并验证硬 Alpha 与安全边。
 - 六张阶段 2C 图集可由 [`scripts/prepare_stage2c_assets.py`](scripts/prepare_stage2c_assets.py)
   从入库源图字节级复现；每项加载失败时只回退对应旧绘制。
 - 阶段 2D 已把正式七天流程的草坪补成细草底纹、跨格明暗草团和低矮杂草 / 碎花三层；
@@ -165,7 +169,7 @@ uv run --python 3.12 python -m http.server 8000
 
 ## 后续适合继续做
 
-- 进入阶段 4：统一任务完成、章节收束和关键交互的像素反馈
+- 进入阶段 4B：统一任务完成、章节收束和关键交互的像素反馈
 - 为集会当天补更多即兴对白与轻互动
 - 把现在的首轮音频素材继续细化成更完整的环境层、过门、淡入淡出和 UI 声音
 - 按 `docs/bgm-redesign-plan.md` 把村庄主题扩成多时间段、多变体结构

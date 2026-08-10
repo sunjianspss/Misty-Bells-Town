@@ -116,6 +116,13 @@
       rows: { base: 0, foreground: 1 },
       columns: { closedCrate: 0, openCrate: 1 },
     },
+    villageHouses: {
+      src: "assets/images/game/v0.4/props/prop_village_houses_layers_2x2_v01.png",
+      cellWidth: 128,
+      cellHeight: 128,
+      rows: { base: 0, foreground: 1 },
+      columns: { west: 0, east: 1 },
+    },
     storyProps: {
       src: "assets/images/game/v0.4/props/prop_story_props_4x3_v01.png",
       cellWidth: 64,

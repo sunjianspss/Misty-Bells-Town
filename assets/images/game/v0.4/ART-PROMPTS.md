@@ -520,3 +520,40 @@ env UV_CACHE_DIR="$PWD/.uv-cache" uv run --python 3.12 python scripts/prepare_st
 
 脚本验证十个人物单元均非空、保持硬 Alpha 与原生 `y=46` 脚点；天气图集八个单元均非空且
 只含 `0 / 255` Alpha。相同输入与脚本版本会得到字节一致的 PNG。
+
+## 阶段 4A：南街民居与街巷
+
+本阶段使用 Codex 内置图像生成工具生成一张原创品红底双民居源稿，现有面包房图集只用于
+人工确认靛蓝瓦、暖木、雾白与鼠尾草配色方向，没有裁切、复制或作为像素输入。最终提示词：
+
+```text
+Use case: stylized-concept
+Asset type: source sheet for a top-down 2D pixel-art village game
+Primary request: create exactly two distinct small spring-village houses, shown side by side as isolated sprites for later atlas processing.
+Scene/backdrop: perfectly flat solid #FF00FF chroma-key background, one uniform color with no shadows, gradients, texture, reflections, floor plane, or lighting variation.
+Subject: left house is a compact warm timber-and-plaster cottage with a deep indigo ceramic-tile roof, tiny amber window, centered dark wooden door, modest stone footing, and one small chimney. Right house is a slightly narrower sage-plaster cottage with a blue-black tiled roof, warm wood framing, tiny honey window, offset dark wooden door, flower box, and no chimney.
+Style/medium: polished original top-down three-quarter pixel art for a cozy rural narrative game; crisp 1–3 pixel clusters, hard edges, limited palette, no smoothing or painterly texture.
+Composition/framing: exactly two complete front-facing houses in one horizontal row, equal visual scale, generous clear padding around and between them, no overlap; each house should reduce cleanly to roughly 64 × 64 pixels.
+Lighting/mood: neutral spring daylight with restrained warm windows, no dusk color wash.
+Color palette: deep wood #56372D, warm wood #95603E, lamp gold #F4C467, muted indigo/mauve roof shadows, sage green accents, fog-cream plaster.
+Materials/textures: readable roof-tile rows, timber beams, plaster, stone footing, all simplified into chunky pixel clusters.
+Constraints: the background must remain pure flat #FF00FF and must not appear anywhere in the houses. No cast shadow, no contact shadow, no people, animals, props outside the building silhouettes, road, grass, trees, fence, grid, labels, border, UI, text, logo, watermark, isometric camera, soft gradients, blur, antialiasing, or cropped building.
+```
+
+源图与运行时文件：
+
+- `source/village-houses-keyed-v01.png`：内置生成器原始品红底源稿。
+- `source/village-houses-transparent-v01.png`：严格近色阈值去背后的透明中间稿。
+- `props/prop_village_houses_layers_2x2_v01.png`：`256 × 256` 运行时图集，单元
+  `128 × 128`；上行为完整房屋，下行为屋顶 / 屋檐前景。
+
+运行时图集可确定性复现：
+
+```bash
+env UV_CACHE_DIR="$PWD/.uv-cache" uv run --python 3.12 python scripts/prepare_stage4a_village_assets.py \
+  --source assets/images/game/v0.4/source/village-houses-transparent-v01.png \
+  --output assets/images/game/v0.4/props/prop_village_houses_layers_2x2_v01.png
+```
+
+脚本会移除残余近品红边缘、缩放并无抖动减色、生成独立屋顶前景层，再验证四个图集单元
+非空、四角安全且只含 `0 / 255` Alpha。相同输入与脚本版本得到字节一致 PNG。
