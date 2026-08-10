@@ -497,3 +497,26 @@ env UV_CACHE_DIR="$PWD/.uv-cache" uv run --python 3.12 python scripts/prepare_st
 ```
 
 相同输入会生成字节一致的 PNG；脚本会验证所有单元的硬 Alpha、非空内容与统一 `y=46` 脚点。
+
+## 阶段 3C：环境动画与集会人群派生
+
+本阶段不引入外部素材或生成式参考图。`scripts/prepare_stage3c_assets.py` 读取已入库的五名
+原创匿名集会人物，沿用阶段 3A 的上身一像素呼吸方式派生两帧待机；雨落涟漪与花瓣则由脚本
+以项目既有水蓝、暮桃、杏金配色直接绘制为硬像素图集。
+
+源图与运行时文件：
+
+- `characters/chr_festival_crowd_idle_5x1_v01.png` →
+  `characters/chr_festival_crowd_idle_10x1_2f_v02.png`（`400 × 48`；五人各连续两列）。
+- 脚本原创硬像素 → `effects/fx_weather_4x2_4f_v01.png`（`128 × 64`，单元 `32 × 32`；
+  上行为雨落水洼涟漪，下行为春日花瓣簇）。
+
+```bash
+env UV_CACHE_DIR="$PWD/.uv-cache" uv run --python 3.12 python scripts/prepare_stage3c_assets.py \
+  --crowd assets/images/game/v0.4/characters/chr_festival_crowd_idle_5x1_v01.png \
+  --crowd-output assets/images/game/v0.4/characters/chr_festival_crowd_idle_10x1_2f_v02.png \
+  --weather-output assets/images/game/v0.4/effects/fx_weather_4x2_4f_v01.png
+```
+
+脚本验证十个人物单元均非空、保持硬 Alpha 与原生 `y=46` 脚点；天气图集八个单元均非空且
+只含 `0 / 255` Alpha。相同输入与脚本版本会得到字节一致的 PNG。

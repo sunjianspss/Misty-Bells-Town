@@ -58,6 +58,12 @@
       cellHeight: 48,
       columns: { crowd1: 0, crowd2: 1, crowd3: 2, crowd4: 3, crowd5: 4 },
     },
+    festivalCrowdIdle: {
+      src: "assets/images/game/v0.4/characters/chr_festival_crowd_idle_10x1_2f_v02.png",
+      cellWidth: 40,
+      cellHeight: 48,
+      columns: { crowd1: 0, crowd2: 2, crowd3: 4, crowd4: 6, crowd5: 8 },
+    },
     terrainBase: {
       src: "assets/images/game/v0.4/tiles/tile_terrain_base_4x4_v01.png",
       cellWidth: 32,
@@ -126,6 +132,12 @@
         lantern: 2,
         reflection: 3,
       },
+    },
+    weatherFx: {
+      src: "assets/images/game/v0.4/effects/fx_weather_4x2_4f_v01.png",
+      cellWidth: 32,
+      cellHeight: 32,
+      rows: { rainPuddle: 0, petals: 1 },
     },
     festivalAccents: {
       src: "assets/images/game/v0.4/props/prop_festival_accents_4x2_v01.png",

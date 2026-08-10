@@ -5460,15 +5460,25 @@
     }
 
     if (state.currentDayIndex >= 3) {
-      const chimeFrame = animationFrame(now, 180, 4);
-      if (!drawArtCell("bridgeFx", 0, chimeFrame, px + 4, py - 11, 16, 16)) {
-        ctx.fillStyle = "#7a5b41";
-        ctx.fillRect(px + 12, py - 2, 1, 8);
-        ctx.fillStyle = "#d9ae66";
-        ctx.fillRect(px + 11, py + 4, 3, 3);
-        ctx.fillStyle = state.bellTestReportedDay3 ? "#f0bf6d" : "#c98b6c";
-        ctx.fillRect(px + 11, py + 6, 3, 2);
-      }
+      const chimes =
+        state.currentDayIndex === 7
+          ? [
+              { x: 10 * TILE + 4, y: py - 8, phase: 0 },
+              { x: px + 4, y: py - 11, phase: 1 },
+              { x: 14 * TILE - 2, y: py - 7, phase: 2 },
+            ]
+          : [{ x: px + 4, y: py - 11, phase: 0 }];
+      chimes.forEach((chime) => {
+        const chimeFrame = animationFrame(now, 180, 4, chime.phase * 0.75);
+        if (!drawArtCell("bridgeFx", 0, chimeFrame, chime.x, chime.y, 16, 16)) {
+          ctx.fillStyle = "#7a5b41";
+          ctx.fillRect(chime.x + 8, chime.y + 9, 1, 5);
+          ctx.fillStyle = "#d9ae66";
+          ctx.fillRect(chime.x + 7, chime.y + 12, 3, 3);
+          ctx.fillStyle = state.bellTestReportedDay3 ? "#f0bf6d" : "#c98b6c";
+          ctx.fillRect(chime.x + 7, chime.y + 14, 3, 2);
+        }
+      });
 
       if (state.currentDayIndex === 3 && state.bellIssueSeenDay3 && !state.bellTestReportedDay3) {
         const markers = [
@@ -5690,24 +5700,36 @@
       ctx.fillStyle = "#d9ae66";
       ctx.fillRect(6 * TILE + 17, 7 * TILE + 11, 4, 2);
     }
+  }
 
-    const bits = [
-      { speed: 72, offset: 12, baseY: 18, color: "#f0e3c7" },
-      { speed: 68, offset: 44, baseY: 32, color: "#d58f73" },
-      { speed: 80, offset: 76, baseY: 48, color: "#d9ae66" },
-      { speed: 74, offset: 108, baseY: 26, color: "#9ab7a0" },
-      { speed: 66, offset: 138, baseY: 56, color: "#f0e3c7" },
-      { speed: 82, offset: 168, baseY: 42, color: "#d58f73" },
+  function drawFestivalPetals(now) {
+    if (state.currentDayIndex !== 7) {
+      return;
+    }
+
+    const petals = [
+      { speed: 108, offset: 8, baseY: 4, phase: 0 },
+      { speed: 124, offset: 58, baseY: 34, phase: 1 },
+      { speed: 96, offset: 114, baseY: 72, phase: 2 },
+      { speed: 132, offset: 172, baseY: 108, phase: 3 },
+      { speed: 116, offset: 224, baseY: 144, phase: 1 },
+      { speed: 140, offset: 276, baseY: 184, phase: 2 },
     ];
 
-    bits.forEach((bit, index) => {
+    petals.forEach((petal, index) => {
       const motionNow = prefersReducedMotion ? 0 : now;
+      const motionStep = Math.floor(motionNow / petal.speed);
       const x =
-        (Math.floor(motionNow / bit.speed) + bit.offset) % (MAP_W * TILE + 24) - 12;
-      const y = bit.baseY + Math.round(Math.sin(motionNow / 620 + index) * 6);
-      ctx.fillStyle = bit.color;
-      ctx.fillRect(x, y, 2, 2);
-      ctx.fillRect(x + 1, y + 2, 1, 2);
+        (motionStep + petal.offset) % (LOGICAL_W + 32) - 16;
+      const stepY = Math.floor(motionStep / 3);
+      const swayY = [0, 1, 2, 1][(motionStep + index) % 4];
+      const y = (petal.baseY + stepY + swayY) % (LOGICAL_H + 24) - 12;
+      const frame = animationFrame(now, 170, 4, petal.phase * 0.75);
+      if (!drawArtCell("weatherFx", 1, frame, x, y, 16, 16)) {
+        ctx.fillStyle = index % 2 === 0 ? "#f4a3ae" : "#f7cab0";
+        ctx.fillRect(snapLogical(x + 7), snapLogical(y + 7), 1, 1);
+        ctx.fillRect(snapLogical(x + 8), snapLogical(y + 8), 0.5, 0.5);
+      }
     });
   }
 
@@ -5855,7 +5877,22 @@
     }
 
     if (isFestivalCrowd) {
-      return { key: "festivalCrowd", frame: undefined };
+      const key = artV04 && artV04.get("festivalCrowdIdle")
+        ? "festivalCrowdIdle"
+        : "festivalCrowd";
+      const spec = artV04 && artV04.specs[key];
+      const baseFrame = spec && spec.columns ? spec.columns[entity.palette] : undefined;
+      if (!Number.isInteger(baseFrame)) {
+        return null;
+      }
+      const crowdIndex = Number(entity.palette.slice(-1)) - 1;
+      return {
+        key,
+        frame:
+          key === "festivalCrowdIdle"
+            ? baseFrame + animationFrame(now, 620, 2, crowdIndex * 0.5)
+            : baseFrame,
+      };
     }
 
     return null;
@@ -6039,6 +6076,33 @@
     }
   }
 
+  function drawRainPuddleReflections(now) {
+    if (state.currentDayIndex !== 4) {
+      return;
+    }
+
+    const puddles = [
+      { x: 3 * TILE + 2, y: 5 * TILE + 7, phase: 0 },
+      { x: 7 * TILE - 3, y: 10 * TILE + 8, phase: 1 },
+      { x: 10 * TILE + 1, y: 3 * TILE + 8, phase: 2 },
+      { x: 15 * TILE, y: 7 * TILE + 7, phase: 3 },
+    ];
+
+    puddles.forEach((puddle) => {
+      const frame = animationFrame(now, 170, 4, puddle.phase * 0.75);
+      if (!drawArtCell("weatherFx", 0, frame, puddle.x, puddle.y, 16, 16)) {
+        const width = [2, 5, 8, 5][frame];
+        ctx.fillStyle = frame >= 2 ? "#49778b" : "#78a4b5";
+        ctx.fillRect(
+          snapLogical(puddle.x + 8 - width / 2),
+          snapLogical(puddle.y + 10.5),
+          width,
+          0.5,
+        );
+      }
+    });
+  }
+
   function drawRain(now) {
     if (state.currentDayIndex !== 4) {
       return;
@@ -6080,6 +6144,38 @@
       ctx.fillStyle = "rgba(68, 53, 45, 0.2)";
       ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
     }
+  }
+
+  function drawDuskLightBoundary(now) {
+    if (state.currentDayIndex !== 6 || state.timeSlot !== "傍晚") {
+      return;
+    }
+
+    const boundaryShift = [-1, 0, 1, 0][animationFrame(now, 620, 4)];
+    const bandHeight = 28;
+    const bandCount = Math.ceil(LOGICAL_H / bandHeight);
+
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    ctx.fillStyle = "rgba(244, 172, 103, 0.07)";
+    for (let band = 0; band < bandCount; band += 1) {
+      const edge = 11 * TILE + band * 4 + boundaryShift;
+      ctx.fillRect(0, band * bandHeight, edge, bandHeight);
+    }
+    ctx.restore();
+
+    ctx.save();
+    ctx.fillStyle = "rgba(48, 77, 108, 0.075)";
+    for (let band = 0; band < bandCount; band += 1) {
+      const edge = 11 * TILE + band * 4 + boundaryShift;
+      ctx.fillRect(edge, band * bandHeight, LOGICAL_W - edge, bandHeight);
+    }
+    ctx.fillStyle = "rgba(255, 208, 132, 0.055)";
+    for (let band = 0; band < bandCount; band += 1) {
+      const edge = 11 * TILE + band * 4 + boundaryShift;
+      ctx.fillRect(edge - 2, band * bandHeight, 3, bandHeight);
+    }
+    ctx.restore();
   }
 
   function fillPixelGlow(cx, cy, width, height, notch) {
@@ -6305,6 +6401,7 @@
       drawFestivalPrep(now);
       drawSharedBridgeTraces(now);
       drawFestivalAtmosphere(now);
+      drawRainPuddleReflections(now);
     }
 
     const dialogueSpeakerId = currentDialogueSpeakerId();
@@ -6367,7 +6464,9 @@
       drawBridgeFrontRail();
       drawMist(now);
       drawRain(now);
+      drawFestivalPetals(now);
       drawEveningTint();
+      drawDuskLightBoundary(now);
       drawLampLightPass(now);
     }
 
