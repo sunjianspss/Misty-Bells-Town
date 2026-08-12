@@ -272,3 +272,33 @@ final result: passed
 - P2：桥面画面 / 碰撞不一致与灯笼假碰撞均已修复。
 
 final result: passed
+
+## 桥灯支撑锚点修正
+
+### 根因与修复
+
+- 上一轮把灯体与整套灯架统一移动到 `drawY=8.5`，虽然避开了桥面视觉，但支撑底座也随之
+  离开栏杆；右灯同时使用 `drawX=15`，导致支撑落在桥外水格。
+- 灯体继续使用栏外 `drawX / drawY`，新增独立的 `supportX / supportY`：春 1–5 的两根
+  环境灯架锚在 `(11,9)` 与 `(14,9)`，春 6–7 仅右侧独立灯架锚在 `(14,9)`；左 / 中灯
+  继续由既有集会横架承托，避免重复木杆。
+- 碰撞、互动格、NPC 坐标、任务状态与灯光反射位置均未改变。
+
+### 回归与视觉验证
+
+- `node --test tests/bridge-lamp-anchor.test.mjs` 的负向控制先以 `0 !== 5` 失败，补齐纵向锚点
+  后通过；加入横向桥端约束时又以空锚点列表失败，修正 `supportX` 后通过。
+- `output/playwright/bridge-lamp-support-spring1-final.png`：两根环境灯架分别连接桥头栏杆与
+  桥端栏柱。
+- `output/playwright/bridge-lamp-support-spring6-final.png`：左 / 中灯由横架承托，右灯由桥端
+  支架承托，没有悬浮或重复木杆。
+- 春 6 上排实走保持 `(11,9) → (12,9) → (13,9)`；浏览器控制台 `0 error / 0 warning`。
+- `node --check script.js`、`git diff --check` 通过。
+
+### 最终发现
+
+- P0：无。
+- P1：无。
+- P2：灯架脱离桥栏的视觉断层已修复。
+
+final result: passed

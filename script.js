@@ -159,8 +159,8 @@
       { x: 16, y: 8 },
     ],
     lamps: [
-      { x: 11, y: 9, drawX: 11, drawY: 8.5 },
-      { x: 14, y: 9, drawX: 15, drawY: 8.5 },
+      { x: 11, y: 9, drawX: 11, drawY: 8.5, supportX: 11, supportY: 9 },
+      { x: 14, y: 9, drawX: 15, drawY: 8.5, supportX: 14, supportY: 9 },
     ],
   };
 
@@ -5515,6 +5515,8 @@
         tileY: 9,
         drawX: 15,
         drawY: 8.5,
+        supportX: 14,
+        supportY: 9,
       },
     ];
   }
@@ -5528,6 +5530,20 @@
     );
   }
 
+  function drawBridgeLampSupport(drawX, supportY) {
+    const px = drawX * TILE;
+    const py = supportY * TILE;
+    if (drawArtCell("festivalAccents", 0, 3, px - 8, py - 16, 32, 32)) {
+      return;
+    }
+
+    ctx.fillStyle = "#56372d";
+    ctx.fillRect(px + 7, py - 3, 2, 14);
+    ctx.fillRect(px + 7, py - 3, 6, 1);
+    ctx.fillStyle = "#7a5b41";
+    ctx.fillRect(px + 5, py + 9, 6, 2);
+  }
+
   function drawLamps(now) {
     if (state.currentDayIndex >= 6) {
       return;
@@ -5538,21 +5554,7 @@
       const py = (lamp.drawY ?? lamp.y) * TILE;
       const lit = state.timeSlot === "傍晚" || state.timeSlot === "夜晚";
       const frame = lit ? 2 + animationFrame(now, 210, 2, index * 0.5) : 0;
-      if (
-        !drawArtCell(
-          "festivalAccents",
-          0,
-          3,
-          px - 8,
-          py - 16,
-          32,
-          32,
-        )
-      ) {
-        ctx.fillStyle = "#56372d";
-        ctx.fillRect(px + 7, py + 5, 2, 11);
-        ctx.fillRect(px + 7, py + 5, 6, 1);
-      }
+      drawBridgeLampSupport(lamp.supportX ?? lamp.x, lamp.supportY ?? lamp.y);
       if (!drawArtCell("bridgeFx", 2, frame, px + 2, py - 3, 12, 12)) {
         ctx.fillStyle = lit ? "#f4c467" : "#786553";
         ctx.fillRect(px + 6, py + 2, 4, 4);
@@ -5708,6 +5710,9 @@
           : 0;
         const x = lantern.drawX * TILE;
         const y = lantern.drawY * TILE;
+        if (Number.isFinite(lantern.supportX) && Number.isFinite(lantern.supportY)) {
+          drawBridgeLampSupport(lantern.supportX, lantern.supportY);
+        }
         if (!drawArtCell("bridgeFx", 2, frame, x, y, 16, 16)) {
           ctx.fillStyle = "#56372d";
           ctx.fillRect(x + 6.5, y + 2, 3, 8);
